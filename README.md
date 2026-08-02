@@ -541,7 +541,7 @@ function renderPopupWord(){
 
 function openWord(key,w){
   active = Object.assign({key}, w);
-  showAnswer=false; voiceAttempts=0; hlIndex=-1; listening=false;
+  showAnswer=false; voiceAttempts=0; hlIndex=-1; listening=false; holding=false; gotResult=false; collectedAlts=[];
   $("popupWord").textContent = w.word;
   $("popupBefore").classList.remove("hidden");
   $("popupAfter").classList.add("hidden");
@@ -625,6 +625,11 @@ function startIsland(){
 let rec = null;
 let audioCtx = null, analyser = null, micStream = null, volumeRAF = null;
 let gotResult = false;
+// iOS の Safari / Chrome では continuous=true でも 発話の区切りで
+// onend が発火してしまうため、「ボタンを押しているか」を別に持ち、
+// 押している間は認識を自動で再開する。
+let holding = false;
+let collectedAlts = [];
 
 // マイクの音量をひろって、こえに はんのうする バーを うごかす。
 // 「ちゃんと ひろえている」ことが 目に見えると 子どもが 安心して 声を出せる。
@@ -685,6 +690,7 @@ function beginListening(){
 
   gotResult = false;
   listening = true;
+  holding = true;
   rec.lang = "ja-JP";
   rec.interimResults = true;   // とちゅうの けっかも うけとって 反応を見せる
   rec.maxAlternatives = 5;
@@ -699,35 +705,8 @@ function beginListening(){
 
   startVolumeMeter();
 
-  let finalText = "";
-  let allAlts = [];
-
-  rec.onresult = e => {
-    for(let i=e.resultIndex; i<e.results.length; i++){
-      const r = e.results[i];
-      for(let j=0;j<r.length;j++) allAlts.push(r[j].transcript);
-      if(r.isFinal) finalText += r[0].transcript;
-      else $("volumeHint").textContent = "きこえてるよ：" + r[0].transcript;
-    }
-    if(allAlts.some(a => spokenOk(a, active.word))){
-      gotResult = true;
-      stopListening(true, allAlts);
-    }
-  };
-
-  rec.onerror = e => {
-    const code = (e && e.error) || "unknown";
-    if(code === "not-allowed" || code === "service-not-allowed"){
-      stopListening(false, allAlts, "マイクが つかえませんでした（きょかが ひつようです）。したの ボタンで すすんでね", true);
-    } else if(code === "no-speech"){
-      // 無音は しっぱいに かぞえない
-      stopListening(false, allAlts, "こえが きこえなかったよ。ボタンを おしたまま いってみてね", false, true);
-    }
-  };
-
-  rec.onend = ()=>{
-    if(listening && !gotResult) stopListening(false, allAlts);
-  };
+  collectedAlts = [];
+  attachRecognitionHandlers();
 
   try{ rec.start(); }
   catch(err){
@@ -735,9 +714,63 @@ function beginListening(){
   }
 }
 
+// 認識イベントの設定。ボタンを押しているあいだ 何度でも張り直せるようにする。
+function attachRecognitionHandlers(){
+  if(!rec) return;
+
+  rec.onresult = e => {
+    for(let i=e.resultIndex; i<e.results.length; i++){
+      const r = e.results[i];
+      for(let j=0;j<r.length;j++) collectedAlts.push(r[j].transcript);
+      if(!r.isFinal) $("volumeHint").textContent = "きこえてるよ：" + r[0].transcript;
+    }
+    if(collectedAlts.some(a => spokenOk(a, active.word))){
+      gotResult = true;
+      holding = false;
+      stopListening(true, collectedAlts);
+    }
+  };
+
+  rec.onerror = e => {
+    const code = (e && e.error) || "unknown";
+    if(code === "not-allowed" || code === "service-not-allowed"){
+      holding = false;
+      stopListening(false, collectedAlts, "マイクが つかえませんでした（きょかが ひつようです）。したの ボタンで すすんでね", true);
+    }
+    // no-speech / aborted などは onend での自動再開にまかせる
+  };
+
+  rec.onend = ()=>{
+    if(gotResult) return;
+    if(holding){
+      // まだボタンを押しているので、認識を 再開する。
+      // iOS では stop 直後の start が例外になることがあるため 少しだけ待つ。
+      setTimeout(()=>{
+        if(!holding || gotResult) return;
+        try{
+          rec = getRecognition();
+          rec.lang = "ja-JP";
+          rec.interimResults = true;
+          rec.maxAlternatives = 5;
+          rec.continuous = true;
+          attachRecognitionHandlers();
+          rec.start();
+          $("volumeHint").textContent = "きいているよ…";
+        }catch(err){
+          holding = false;
+          stopListening(false, collectedAlts);
+        }
+      }, 120);
+      return;
+    }
+    if(listening) stopListening(false, collectedAlts);
+  };
+}
+
 function stopListening(matched, alts, customMsg, forceReveal, skipCount){
   if(!listening) return;
   listening = false;
+  holding = false;
   try{ if(rec) rec.stop(); }catch(e){}
   stopVolumeMeter();
 
@@ -885,7 +918,11 @@ $("backToLevelBtn").onclick = ()=>{
   const mic = $("micBtn");
 
   const press = (e)=>{ e.preventDefault(); beginListening(); };
-  const release = (e)=>{ e.preventDefault(); if(listening) stopListening(false, []); };
+  const release = (e)=>{
+    e.preventDefault();
+    holding = false;               // まず「押していない」状態にする
+    if(listening) stopListening(false, collectedAlts);
+  };
 
   mic.addEventListener("touchstart", press, { passive:false });
   mic.addEventListener("touchend", release, { passive:false });
@@ -893,7 +930,7 @@ $("backToLevelBtn").onclick = ()=>{
 
   mic.addEventListener("mousedown", press);
   mic.addEventListener("mouseup", release);
-  mic.addEventListener("mouseleave", ()=>{ if(listening) stopListening(false, []); });
+  mic.addEventListener("mouseleave", ()=>{ holding = false; if(listening) stopListening(false, collectedAlts); });
 
   // 押したまま指が動いても録音が止まらないよう、既定のスクロール等は抑える
   mic.addEventListener("contextmenu", e=>e.preventDefault());
