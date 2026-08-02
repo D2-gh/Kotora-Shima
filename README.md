@@ -1,1 +1,962 @@
-# Kotora-Shima
+<!DOCTYPE html>
+
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>ことばの しま たんけん</title>
+<style>
+  * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+  body {
+    margin: 0;
+    padding: 20px 14px 40px;
+    min-height: 100vh;
+    background: linear-gradient(180deg, #cdeaf5 0%, #eaf6e8 100%);
+    font-family: "Hiragino Maru Gothic ProN", "UD Digital Kyokasho", "Yu Gothic", sans-serif;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+  }
+  button { font-family: inherit; cursor: pointer; }
+  h1 { font-size: 23px; font-weight: 800; color: #2b4a3a; margin: 0; letter-spacing: 1px; }
+  .sub { font-size: 12.5px; color: #5a7a68; margin: 4px 0 0; }
+  .header { text-align: center; margin-bottom: 14px; }
+
+.settings-btn {
+position: fixed; top: 12px; right: 12px;
+padding: 6px 10px; border-radius: 10px;
+border: 1px solid #d8d4c4; background: rgba(255,255,255,0.85);
+color: #a8a498; font-size: 10.5px; font-weight: 600; z-index: 5;
+}
+
+.card {
+background: #fff; border-radius: 22px;
+box-shadow: 0 8px 24px rgba(0,0,0,0.12);
+padding: 26px 22px; text-align: center;
+width: 330px; max-width: 92vw;
+}
+
+.pill {
+display: flex; align-items: center; gap: 8px;
+background: #fff; padding: 8px 16px; border-radius: 20px;
+box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+font-size: 14px; font-weight: 700; color: #3a3a34;
+}
+.stats { display: flex; gap: 10px; margin-bottom: 14px; flex-wrap: wrap; justify-content: center; }
+
+#map {
+position: relative; border-radius: 16px; overflow: hidden;
+box-shadow: 0 8px 24px rgba(0,0,0,0.18); border: 4px solid #fff;
+}
+.tile {
+position: absolute; display: flex; align-items: center; justify-content: center;
+font-size: 18px; border-right: 1px solid rgba(255,255,255,0.15);
+border-bottom: 1px solid rgba(255,255,255,0.15);
+}
+
+.dpad { margin-top: 20px; display: grid; grid-template-columns: 56px 56px 56px; grid-template-rows: 56px 56px 56px; gap: 4px; }
+.dpad button {
+border-radius: 14px; border: none; background: #fff;
+box-shadow: 0 3px 8px rgba(0,0,0,0.15); font-size: 22px;
+display: flex; align-items: center; justify-content: center;
+}
+.dpad button:active { transform: scale(0.92); }
+
+.overlay {
+position: fixed; inset: 0; background: rgba(40,50,45,0.45);
+display: flex; align-items: center; justify-content: center;
+padding: 20px; z-index: 10;
+}
+.overlay .card { max-height: 85vh; overflow-y: auto; }
+
+.btn-primary {
+padding: 14px 26px; border-radius: 15px; border: none;
+background: #4a6b5e; color: #fff; font-size: 16px; font-weight: 800;
+box-shadow: 0 4px 12px rgba(74,107,94,0.35);
+}
+.btn-outline {
+padding: 12px 22px; border-radius: 14px; border: 2px solid #d8d4c4;
+background: #fff; color: #6b6b5e; font-size: 14px; font-weight: 700;
+}
+.btn-level {
+padding: 13px 16px; border-radius: 13px; border: 2px solid #e8e6da;
+background: #fff; color: #3a3a34; font-size: 14.5px; font-weight: 700;
+width: 100%; margin-bottom: 9px;
+}
+.btn-level.active { border: 2.5px solid #4a6b5e; background: #eef4ef; }
+
+.word-big { font-size: 44px; font-weight: 800; letter-spacing: 4px; color: #3a3a34; padding: 10px 0; }
+.illust-box { width: 90px; height: 90px; margin: 0 auto 10px; display: flex; align-items: center; justify-content: center; font-size: 72px; line-height: 1; }
+.illust-box svg { width: 100%; height: 100%; }
+
+.mic-btn {
+width: 92px; height: 92px; border-radius: 50%; border: none;
+color: #fff; font-size: 38px; margin-bottom: 14px;
+box-shadow: 0 4px 14px rgba(0,0,0,0.2); transition: all .2s;
+}
+.mic-btn.listening { background: #e85d5d !important; box-shadow: 0 0 0 8px rgba(232,93,93,0.2); transform: scale(1.06); }
+.mic-btn { touch-action: none; user-select: none; -webkit-user-select: none; }
+
+@keyframes popIn { 0% { transform: scale(.85); opacity: 0 } 100% { transform: scale(1); opacity: 1 } }
+@keyframes hop { 0%,100% { transform: translateY(0) } 50% { transform: translateY(-5px) } }
+@keyframes sparkle { 0%,100% { opacity:.4; transform: scale(.9) } 50% { opacity:1; transform: scale(1.15) } }
+@keyframes gentleBounce { 0%,100% { transform: translateY(0) } 50% { transform: translateY(-6px) } }
+.pop { animation: popIn .25s ease-out }
+.hop { animation: hop .3s ease-out }
+.sparkle { animation: sparkle 1.4s ease-in-out infinite }
+.bounce { animation: gentleBounce 1.8s ease-in-out infinite }
+
+.hidden { display: none !important; }
+</style>
+
+</head>
+<body>
+
+<button class="settings-btn" id="settingsBtn">⚙️ おうちの ひと せってい</button>
+
+<div class="header">
+  <h1>ことばの しま たんけん</h1>
+  <p class="sub">やじるしで あるいて、ことばを あつめよう</p>
+</div>
+
+<!-- スタート画面 -->
+
+<div id="startScreen" class="card pop">
+  <div style="font-size:44px;margin-bottom:10px">&#127965;&#65039;</div>
+  <p style="font-size:15px;font-weight:800;color:#3a3a34;margin:0 0 4px">きょうは どの しまに いく？</p>
+  <p style="font-size:12px;color:#8a8a7c;margin:0 0 18px;line-height:1.6">
+    1かいの たんけんで <span id="spotCountLabel">5</span>このことばに であうよ
+  </p>
+  <div id="levelButtons" style="margin-bottom:18px"></div>
+  <button class="btn-primary" id="startBtn" style="width:100%">たんけんに しゅっぱつ！</button>
+  <div id="streakBox" style="margin-top:16px;font-size:12.5px;color:#8a8a7c;line-height:1.7"></div>
+</div>
+
+<!-- ゲーム画面 -->
+
+<div id="gameScreen" class="hidden" style="display:flex;flex-direction:column;align-items:center">
+  <div class="stats">
+    <div class="pill"><span style="font-size:18px">&#128214;</span><span id="progressLabel">0 / 5 こ みつけた</span></div>
+    <div class="pill"><span style="font-size:16px">&#11088;</span><span style="color:#c99a3e" id="pointsLabel">0 ポイント</span></div>
+  </div>
+  <div class="pill" id="gemBox" style="margin-bottom:14px;gap:3px;padding:8px 12px;flex-wrap:wrap;max-width:180px;justify-content:center"></div>
+  <div id="rewardPreview" class="hidden" style="display:flex;align-items:center;gap:10px;background:#fff;padding:8px 12px;border-radius:16px;box-shadow:0 2px 8px rgba(0,0,0,.08);margin-bottom:14px;max-width:320px;border:2px solid #f0c060">
+    <img id="rewardPreviewImg" style="width:44px;height:44px;border-radius:10px;object-fit:cover;flex-shrink:0">
+    <div style="text-align:left;min-width:0">
+      <div style="font-size:10.5px;color:#c99a3e;font-weight:700">つぎの ごほうび</div>
+      <div id="rewardPreviewText" style="font-size:12.5px;color:#3a3a34;font-weight:600;overflow:hidden;text-overflow:ellipsis;white-space:nowrap"></div>
+    </div>
+  </div>
+
+  <div id="map"></div>
+
+  <div class="dpad">
+    <div></div><button data-dx="0" data-dy="-1">&#11015;&#65039;</button><div></div>
+    <button data-dx="-1" data-dy="0">&#11013;&#65039;</button>
+    <div style="display:flex;align-items:center;justify-content:center;font-size:22px">&#128035;</div>
+    <button data-dx="1" data-dy="0">&#10145;&#65039;</button>
+    <div></div><button data-dx="0" data-dy="1">&#11015;&#65039;</button><div></div>
+  </div>
+
+  <div id="clearBox" class="card pop hidden" style="margin-top:22px">
+    <div style="font-size:40px;margin-bottom:6px">&#127942;</div>
+    <p style="font-size:16px;font-weight:800;color:#3a3a34;margin:0 0 14px">しまの ことばを ぜんぶ みつけたね！</p>
+    <button class="btn-primary" id="nextIslandBtn" style="width:100%;margin-bottom:8px">つぎの しまへ いく</button>
+    <button class="btn-outline" id="backToLevelBtn" style="width:100%">レベルを えらびなおす</button>
+  </div>
+</div>
+
+<!-- 単語ポップアップ -->
+
+<div id="wordOverlay" class="overlay hidden">
+  <div class="card pop">
+    <div style="font-size:13px;color:#8a8a7c;margin-bottom:10px;font-weight:700">&#10024; みつけた！</div>
+    <div id="popupBefore">
+      <div class="word-big" id="popupWord"></div>
+      <p style="font-size:14px;color:#6b6b5e;margin-bottom:16px" id="popupPrompt">マイクを おしたまま こえに だして よんでみよう</p>
+      <button class="mic-btn" id="micBtn">&#127908;</button>
+      <div id="volumeWrap" class="hidden" style="width:180px;margin:0 auto 12px">
+        <div style="height:10px;background:#e8e6da;border-radius:6px;overflow:hidden">
+          <div id="volumeBar" style="height:100%;width:0%;background:#5a9a5c;border-radius:6px;transition:width .08s linear"></div>
+        </div>
+        <div id="volumeHint" style="font-size:11px;color:#8a8a7c;margin-top:5px">こえを ひろっています…</div>
+      </div>
+      <p id="voiceMsg" style="font-size:13px;color:#c47a4a;margin-bottom:12px;line-height:1.6"></p>
+      <button class="btn-outline hidden" id="revealBtn">イラストを みる</button>
+    </div>
+    <div id="popupAfter" class="hidden">
+      <div class="illust-box" id="popupIllust"></div>
+      <div id="popupWordHl" style="font-size:30px;font-weight:800;letter-spacing:3px;margin-bottom:18px"></div>
+      <button class="btn-outline" id="replayBtn" style="margin-bottom:14px;padding:8px 16px;font-size:13px">&#128266; もういちど きく</button>
+      <br>
+      <button class="btn-primary" id="collectBtn">ゲットした！</button>
+    </div>
+  </div>
+</div>
+
+<!-- ごほうびカード -->
+
+<div id="rewardOverlay" class="overlay hidden" style="z-index:20">
+  <div class="card pop" style="background:linear-gradient(180deg,#fff9e8 0%,#fff 100%);border:3px solid #f0c060">
+    <div style="font-size:44px;margin-bottom:8px">&#128142;&#10024;&#128142;</div>
+    <p style="font-size:19px;font-weight:800;color:#c99a3e;margin:0 0 16px">たからものを <span id="gemGoalLabel">10</span>こ あつめたよ！</p>
+    <div id="rewardContent"></div>
+    <button class="btn-primary" id="rewardCloseBtn" style="background:#c99a3e;box-shadow:0 4px 12px rgba(201,154,62,.4)">みせたよ！</button>
+  </div>
+</div>
+
+<!-- 設定パネル -->
+
+<div id="settingsOverlay" class="overlay hidden" style="z-index:30">
+  <div class="card pop" style="width:360px;text-align:left">
+    <h2 style="font-size:16px;font-weight:800;color:#3a3a34;margin:0 0 4px">おうちの ひと せってい</h2>
+
+```
+<div style="margin-bottom:20px;padding-bottom:16px;border-bottom:1px solid #eae7dc">
+  <label style="display:block;font-size:13px;font-weight:700;color:#3a3a34;margin-bottom:6px">よみあげの かくにん</label>
+  <p style="font-size:11.5px;color:#8a8a7c;margin:0 0 10px;line-height:1.6">ことばを タップすると、よみかたの こうほを 聞きくらべできます。</p>
+  <div id="readingPanel"></div>
+  <div id="wordChips" style="display:flex;flex-wrap:wrap;gap:6px;max-height:180px;overflow-y:auto;padding:4px;background:#faf9f4;border-radius:10px"></div>
+</div>
+
+<p style="font-size:12.5px;color:#8a8a7c;margin:0 0 12px;line-height:1.6">
+  たからものを <span class="gemGoalLabel">10</span>こ あつめたときに 表示する ごほうび写真と、ひとことメッセージを登録できます。大きい画像は自動で圧縮されます。
+</p>
+
+<label style="display:block;font-size:13px;font-weight:700;color:#3a3a34;margin-bottom:8px">ごほうび写真</label>
+<img id="settingsPhotoPreview" class="hidden" style="width:100%;border-radius:12px;margin-bottom:10px;border:1px solid #e8e6da">
+<input type="file" accept="image/*" id="photoInput" style="font-size:12.5px;margin-bottom:10px;width:100%">
+<p id="uploadMsg" style="font-size:12px;margin:0 0 10px"></p>
+
+<label style="display:block;font-size:13px;font-weight:700;color:#3a3a34;margin:6px 0 8px">ひとことメッセージ（にんい）</label>
+<input type="text" id="messageInput" placeholder="れい：こうえんに いこうね"
+  style="width:100%;padding:10px 12px;border-radius:10px;border:1px solid #d8d4c4;font-size:14px;margin-bottom:16px;font-family:inherit">
+
+<div style="background:#f4f8f4;border-radius:10px;padding:10px 12px;margin-bottom:16px">
+  <div style="font-size:12.5px;font-weight:700;color:#3a3a34;margin-bottom:6px">きろく</div>
+  <div id="recordSummary" style="font-size:11.5px;color:#6b6b5e;line-height:1.7"></div>
+  <button class="btn-outline" id="resetBtn" style="margin-top:10px;padding:7px 12px;font-size:11.5px;width:100%">きろくを ぜんぶ けす</button>
+</div>
+
+<button class="btn-primary" id="settingsCloseBtn" style="width:100%;background:#4a6b5e">とじる</button>
+```
+
+  </div>
+</div>
+
+<script>
+const SVGS = {"SVG_YASAI": "<svg viewBox=\"0 0 140 140\" width=\"100%\" height=\"100%\">\n    <path d=\"M 30 60 Q 25 90 35 100 L 45 100 Q 55 90 50 60 Z\" fill=\"#e8834a\"/>\n  <path d=\"M 33 60 L 30 40 M 40 60 L 40 38 M 47 60 L 50 40\" stroke=\"#4a8a4a\" stroke-width=\"4\" stroke-linecap=\"round\"/>\n  \n  <circle cx=\"80\" cy=\"80\" r=\"22\" fill=\"#d94a3a\"/>\n  <path d=\"M 80 58 L 75 50 M 80 58 L 80 48 M 80 58 L 85 50\" stroke=\"#4a8a4a\" stroke-width=\"3\" stroke-linecap=\"round\"/>\n  \n  <circle cx=\"112\" cy=\"90\" r=\"20\" fill=\"#8fc06a\"/>\n  <path d=\"M 100 82 Q 112 75 124 82 M 98 92 Q 112 85 126 92 M 100 100 Q 112 95 124 100\" stroke=\"#6a9a4a\" stroke-width=\"2\" fill=\"none\"/>\n  </svg>", "SVG_KARASU": "<svg viewBox=\"0 0 140 140\" width=\"100%\" height=\"100%\">\n    <ellipse cx=\"70\" cy=\"80\" rx=\"34\" ry=\"28\" fill=\"#2b2b2b\"/>\n  <circle cx=\"95\" cy=\"55\" r=\"20\" fill=\"#2b2b2b\"/>\n  \n  <path d=\"M 113 55 L 132 60 L 113 66 Z\" fill=\"#1a1a1a\"/>\n  \n  <circle cx=\"100\" cy=\"52\" r=\"3\" fill=\"#fff\"/>\n  \n  <path d=\"M 45 75 Q 30 85 40 100 Q 55 95 55 80 Z\" fill=\"#1a1a1a\"/>\n  \n  <path d=\"M 38 90 L 15 100 L 20 82 Z\" fill=\"#2b2b2b\"/>\n  \n  <line x1=\"65\" y1=\"106\" x2=\"62\" y2=\"120\" stroke=\"#1a1a1a\" stroke-width=\"3\"/>\n  <line x1=\"78\" y1=\"106\" x2=\"81\" y2=\"120\" stroke=\"#1a1a1a\" stroke-width=\"3\"/>\n  </svg>", "SVG_TONBO": "<svg viewBox=\"0 0 140 140\" width=\"100%\" height=\"100%\">\n    <g stroke=\"#2b3a4a\" stroke-width=\"3\" fill=\"none\" stroke-linecap=\"round\">\n    \n    <ellipse cx=\"45\" cy=\"45\" rx=\"30\" ry=\"10\" fill=\"#cfe8f0\" fill-opacity=\"0.6\" stroke=\"#7fa8b8\" transform=\"rotate(-25 45 45)\"/>\n    <ellipse cx=\"95\" cy=\"45\" rx=\"30\" ry=\"10\" fill=\"#cfe8f0\" fill-opacity=\"0.6\" stroke=\"#7fa8b8\" transform=\"rotate(25 95 45)\"/>\n    <ellipse cx=\"45\" cy=\"58\" rx=\"26\" ry=\"8\" fill=\"#cfe8f0\" fill-opacity=\"0.6\" stroke=\"#7fa8b8\" transform=\"rotate(-15 45 58)\"/>\n    <ellipse cx=\"95\" cy=\"58\" rx=\"26\" ry=\"8\" fill=\"#cfe8f0\" fill-opacity=\"0.6\" stroke=\"#7fa8b8\" transform=\"rotate(15 95 58)\"/>\n  </g>\n  <g stroke=\"#2b3a4a\" stroke-width=\"3\" stroke-linecap=\"round\">\n    \n    <line x1=\"70\" y1=\"58\" x2=\"70\" y2=\"120\" />\n    <line x1=\"65\" y1=\"70\" x2=\"75\" y2=\"70\" />\n    <line x1=\"64\" y1=\"85\" x2=\"76\" y2=\"85\" />\n    <line x1=\"63\" y1=\"100\" x2=\"77\" y2=\"100\" />\n    <line x1=\"62\" y1=\"112\" x2=\"78\" y2=\"112\" />\n  </g>\n  \n  <circle cx=\"70\" cy=\"40\" r=\"15\" fill=\"#4a90a4\" stroke=\"#2b3a4a\" stroke-width=\"3\"/>\n  <circle cx=\"63\" cy=\"36\" r=\"6\" fill=\"#2b3a4a\"/>\n  <circle cx=\"77\" cy=\"36\" r=\"6\" fill=\"#2b3a4a\"/>\n  \n  <ellipse cx=\"70\" cy=\"55\" rx=\"8\" ry=\"10\" fill=\"#5ba0b0\" stroke=\"#2b3a4a\" stroke-width=\"3\"/>\n  </svg>", "SVG_TOKEI": "<svg viewBox=\"0 0 140 140\" width=\"100%\" height=\"100%\">\n    <circle cx=\"70\" cy=\"70\" r=\"50\" fill=\"#fdfbf3\" stroke=\"#2b3a4a\" stroke-width=\"5\"/>\n  <circle cx=\"70\" cy=\"70\" r=\"4\" fill=\"#2b3a4a\"/>\n  \n  <g stroke=\"#2b3a4a\" stroke-width=\"3\" stroke-linecap=\"round\">\n    <line x1=\"70\" y1=\"26\" x2=\"70\" y2=\"34\"/>\n    <line x1=\"70\" y1=\"106\" x2=\"70\" y2=\"114\"/>\n    <line x1=\"26\" y1=\"70\" x2=\"34\" y2=\"70\"/>\n    <line x1=\"106\" y1=\"70\" x2=\"114\" y2=\"70\"/>\n  </g>\n  \n  <line x1=\"70\" y1=\"70\" x2=\"70\" y2=\"42\" stroke=\"#2b3a4a\" stroke-width=\"4\" stroke-linecap=\"round\"/>\n  <line x1=\"70\" y1=\"70\" x2=\"92\" y2=\"55\" stroke=\"#2b3a4a\" stroke-width=\"4\" stroke-linecap=\"round\"/>\n  </svg>", "SVG_TSUKUE": "<svg viewBox=\"0 0 140 140\" width=\"100%\" height=\"100%\">\n    <rect x=\"20\" y=\"50\" width=\"100\" height=\"12\" rx=\"2\" fill=\"#c98a4a\" stroke=\"#2b3a4a\" stroke-width=\"2\"/>\n  <rect x=\"26\" y=\"62\" width=\"8\" height=\"50\" fill=\"#a86a30\" stroke=\"#2b3a4a\" stroke-width=\"2\"/>\n  <rect x=\"106\" y=\"62\" width=\"8\" height=\"50\" fill=\"#a86a30\" stroke=\"#2b3a4a\" stroke-width=\"2\"/>\n  <rect x=\"26\" y=\"98\" width=\"88\" height=\"4\" fill=\"#a86a30\"/>\n  \n  <rect x=\"45\" y=\"64\" width=\"50\" height=\"16\" rx=\"2\" fill=\"#deb887\" stroke=\"#2b3a4a\" stroke-width=\"1.5\"/>\n  <circle cx=\"70\" cy=\"72\" r=\"2\" fill=\"#2b3a4a\"/>\n  </svg>", "SVG_KESHIGOMU": "<svg viewBox=\"0 0 140 140\" width=\"100%\" height=\"100%\">\n    <rect x=\"30\" y=\"45\" width=\"80\" height=\"45\" rx=\"4\" fill=\"#ffffff\" stroke=\"#2b3a4a\" stroke-width=\"3\"/>\n  <rect x=\"30\" y=\"45\" width=\"80\" height=\"16\" fill=\"#e85d5d\" stroke=\"#2b3a4a\" stroke-width=\"2\"/>\n  <line x1=\"30\" y1=\"75\" x2=\"110\" y2=\"75\" stroke=\"#d8d4c8\" stroke-width=\"1.5\"/>\n  </svg>", "SVG_KAGAMI": "<svg viewBox=\"0 0 140 140\" width=\"100%\" height=\"100%\">\n    <ellipse cx=\"70\" cy=\"52\" rx=\"38\" ry=\"42\" fill=\"#e8f4f8\" stroke=\"#8a8a8a\" stroke-width=\"5\"/>\n    <ellipse cx=\"70\" cy=\"52\" rx=\"38\" ry=\"42\" fill=\"none\" stroke=\"#c9a86a\" stroke-width=\"4\"/>\n    <circle cx=\"70\" cy=\"45\" r=\"16\" fill=\"#d8ecf2\"/>\n    <path d=\"M 52 68 Q 70 55 88 68 Q 88 85 70 85 Q 52 85 52 68 Z\" fill=\"#d8ecf2\"/>\n    <rect x=\"60\" y=\"90\" width=\"20\" height=\"24\" rx=\"6\" fill=\"#c9a86a\" stroke=\"#8a6a40\" stroke-width=\"3\"/>\n  </svg>", "SVG_NIWA": "<svg viewBox=\"0 0 140 140\" width=\"100%\" height=\"100%\">\n    <rect x=\"10\" y=\"90\" width=\"120\" height=\"30\" fill=\"#8fc06a\"/>\n  <circle cx=\"35\" cy=\"80\" r=\"18\" fill=\"#5a9a4a\"/>\n  <rect x=\"32\" y=\"95\" width=\"6\" height=\"15\" fill=\"#8a6a40\"/>\n  \n  <g>\n    <circle cx=\"80\" cy=\"95\" r=\"4\" fill=\"#f0a0c0\"/>\n    <circle cx=\"88\" cy=\"95\" r=\"4\" fill=\"#f0a0c0\"/>\n    <circle cx=\"84\" cy=\"88\" r=\"4\" fill=\"#f0a0c0\"/>\n    <circle cx=\"84\" cy=\"102\" r=\"4\" fill=\"#f0a0c0\"/>\n    <circle cx=\"84\" cy=\"95\" r=\"3\" fill=\"#f0c040\"/>\n  </g>\n  <g>\n    <circle cx=\"105\" cy=\"100\" r=\"3.5\" fill=\"#a0c0f0\"/>\n    <circle cx=\"112\" cy=\"100\" r=\"3.5\" fill=\"#a0c0f0\"/>\n    <circle cx=\"108.5\" cy=\"94\" r=\"3.5\" fill=\"#a0c0f0\"/>\n    <circle cx=\"108.5\" cy=\"106\" r=\"3.5\" fill=\"#a0c0f0\"/>\n    <circle cx=\"108.5\" cy=\"100\" r=\"2.5\" fill=\"#f0c040\"/>\n  </g>\n  </svg>", "SVG_MADO": "<svg viewBox=\"0 0 140 140\" width=\"100%\" height=\"100%\">\n    <rect x=\"25\" y=\"20\" width=\"90\" height=\"90\" rx=\"4\" fill=\"#a8d0e8\" stroke=\"#8a6a40\" stroke-width=\"6\"/>\n  <line x1=\"70\" y1=\"20\" x2=\"70\" y2=\"110\" stroke=\"#8a6a40\" stroke-width=\"5\"/>\n  <line x1=\"25\" y1=\"65\" x2=\"115\" y2=\"65\" stroke=\"#8a6a40\" stroke-width=\"5\"/>\n  \n  <ellipse cx=\"48\" cy=\"40\" rx=\"12\" ry=\"7\" fill=\"#ffffff\" opacity=\"0.8\"/>\n  <ellipse cx=\"58\" cy=\"38\" rx=\"9\" ry=\"6\" fill=\"#ffffff\" opacity=\"0.8\"/>\n  </svg>", "SVG_GENKAN": "<svg viewBox=\"0 0 140 140\" width=\"100%\" height=\"100%\">\n    <rect x=\"35\" y=\"20\" width=\"70\" height=\"80\" rx=\"4\" fill=\"#c9a86a\" stroke=\"#2b3a4a\" stroke-width=\"4\"/>\n  <circle cx=\"92\" cy=\"60\" r=\"3\" fill=\"#2b3a4a\"/>\n  \n  <rect x=\"15\" y=\"100\" width=\"110\" height=\"18\" fill=\"#d8d0c0\" stroke=\"#2b3a4a\" stroke-width=\"3\"/>\n  \n  <ellipse cx=\"45\" cy=\"108\" rx=\"12\" ry=\"5\" fill=\"#e85d5d\"/>\n  <ellipse cx=\"95\" cy=\"108\" rx=\"12\" ry=\"5\" fill=\"#4a90a4\"/>\n  </svg>", "SVG_ATAMA": "<svg viewBox=\"0 0 140 140\" width=\"100%\" height=\"100%\">\n    <ellipse cx=\"70\" cy=\"78\" rx=\"36\" ry=\"40\" fill=\"#f5d5b0\" stroke=\"#2b3a4a\" stroke-width=\"3\"/>\n    <path d=\"M 34 65 Q 34 30 70 28 Q 106 30 106 65 Q 95 55 70 55 Q 45 55 34 65 Z\"\n          fill=\"#5a4a3a\" stroke=\"#2b3a4a\" stroke-width=\"2\"/>\n    <path d=\"M 50 112 Q 70 122 90 112 L 90 128 L 50 128 Z\" fill=\"#e8c896\" stroke=\"#2b3a4a\" stroke-width=\"2.5\"/>\n    <path d=\"M 70 8 L 70 22\" stroke=\"#4a90a4\" stroke-width=\"4\" stroke-linecap=\"round\"/>\n    <path d=\"M 63 16 L 70 24 L 77 16\" stroke=\"#4a90a4\" stroke-width=\"4\" fill=\"none\" stroke-linecap=\"round\" stroke-linejoin=\"round\"/>\n  </svg>", "SVG_KAO": "<svg viewBox=\"0 0 140 140\" width=\"100%\" height=\"100%\">\n    <ellipse cx=\"70\" cy=\"72\" rx=\"38\" ry=\"42\" fill=\"#f5d5b0\" stroke=\"#2b3a4a\" stroke-width=\"3\"/>\n  <circle cx=\"55\" cy=\"65\" r=\"4\" fill=\"#2b3a4a\"/>\n  <circle cx=\"85\" cy=\"65\" r=\"4\" fill=\"#2b3a4a\"/>\n  <path d=\"M 68 75 L 65 82 L 70 84\" stroke=\"#c9946a\" stroke-width=\"2\" fill=\"none\" stroke-linecap=\"round\"/>\n  <path d=\"M 55 92 Q 70 100 85 92\" stroke=\"#2b3a4a\" stroke-width=\"3\" fill=\"none\" stroke-linecap=\"round\"/>\n  </svg>", "SVG_BURANKO": "<svg viewBox=\"0 0 140 140\" width=\"100%\" height=\"100%\">\n    <path d=\"M 20 30 L 50 100 M 120 30 L 90 100\" stroke=\"#8a6a40\" stroke-width=\"6\" stroke-linecap=\"round\"/>\n  <line x1=\"20\" y1=\"30\" x2=\"120\" y2=\"30\" stroke=\"#8a6a40\" stroke-width=\"6\" stroke-linecap=\"round\"/>\n  \n  <line x1=\"55\" y1=\"35\" x2=\"60\" y2=\"90\" stroke=\"#7a7a7a\" stroke-width=\"2.5\"/>\n  <line x1=\"85\" y1=\"35\" x2=\"80\" y2=\"90\" stroke=\"#7a7a7a\" stroke-width=\"2.5\"/>\n  \n  <rect x=\"55\" y=\"90\" width=\"30\" height=\"8\" rx=\"3\" fill=\"#e8834a\" stroke=\"#2b3a4a\" stroke-width=\"2\"/>\n  </svg>", "SVG_TETSUBOU": "<svg viewBox=\"0 0 140 140\" width=\"100%\" height=\"100%\">\n    <line x1=\"25\" y1=\"50\" x2=\"25\" y2=\"115\" stroke=\"#6a6a6a\" stroke-width=\"7\" stroke-linecap=\"round\"/>\n  <line x1=\"115\" y1=\"50\" x2=\"115\" y2=\"115\" stroke=\"#6a6a6a\" stroke-width=\"7\" stroke-linecap=\"round\"/>\n  <line x1=\"20\" y1=\"50\" x2=\"120\" y2=\"50\" stroke=\"#8a8a8a\" stroke-width=\"6\" stroke-linecap=\"round\"/>\n  \n  <rect x=\"10\" y=\"112\" width=\"30\" height=\"6\" fill=\"#8a6a40\"/>\n  <rect x=\"100\" y=\"112\" width=\"30\" height=\"6\" fill=\"#8a6a40\"/>\n  </svg>", "SVG_TSUMIKI": "<svg viewBox=\"0 0 140 140\" width=\"100%\" height=\"100%\">\n    <rect x=\"40\" y=\"85\" width=\"35\" height=\"30\" fill=\"#e8834a\" stroke=\"#2b3a4a\" stroke-width=\"2.5\"/>\n  <rect x=\"75\" y=\"85\" width=\"30\" height=\"30\" fill=\"#5b8fa8\" stroke=\"#2b3a4a\" stroke-width=\"2.5\"/>\n  <rect x=\"50\" y=\"52\" width=\"35\" height=\"33\" fill=\"#7a9a5c\" stroke=\"#2b3a4a\" stroke-width=\"2.5\"/>\n  <circle cx=\"90\" cy=\"40\" r=\"14\" fill=\"#c99a3e\" stroke=\"#2b3a4a\" stroke-width=\"2.5\"/>\n  </svg>", "SVG_OMOCHA": "<svg viewBox=\"0 0 140 140\" width=\"100%\" height=\"100%\">\n    <circle cx=\"48\" cy=\"32\" r=\"13\" fill=\"#d9b47c\" stroke=\"#8a6a40\" stroke-width=\"3\"/>\n    <circle cx=\"92\" cy=\"32\" r=\"13\" fill=\"#d9b47c\" stroke=\"#8a6a40\" stroke-width=\"3\"/>\n    <circle cx=\"48\" cy=\"32\" r=\"6\" fill=\"#f0dcc0\"/>\n    <circle cx=\"92\" cy=\"32\" r=\"6\" fill=\"#f0dcc0\"/>\n    <circle cx=\"70\" cy=\"50\" r=\"26\" fill=\"#d9b47c\" stroke=\"#8a6a40\" stroke-width=\"3\"/>\n    <path d=\"M 50 50 Q 70 44 90 50\" stroke=\"#8a6a40\" stroke-width=\"1.5\" fill=\"none\" stroke-dasharray=\"2 3\"/>\n    <circle cx=\"61\" cy=\"48\" r=\"3.5\" fill=\"#3a2a1a\"/>\n    <circle cx=\"79\" cy=\"48\" r=\"3.5\" fill=\"#3a2a1a\"/>\n    <ellipse cx=\"70\" cy=\"58\" rx=\"7\" ry=\"5\" fill=\"#f0dcc0\"/>\n    <circle cx=\"70\" cy=\"56\" r=\"2.5\" fill=\"#3a2a1a\"/>\n    <ellipse cx=\"70\" cy=\"100\" rx=\"30\" ry=\"24\" fill=\"#e8c896\" stroke=\"#8a6a40\" stroke-width=\"3\"/>\n    <path d=\"M 45 95 Q 70 88 95 95\" stroke=\"#8a6a40\" stroke-width=\"1.5\" fill=\"none\" stroke-dasharray=\"2 3\"/>\n    <path d=\"M 70 78 L 58 70 L 58 86 Z\" fill=\"#e85d5d\"/>\n    <path d=\"M 70 78 L 82 70 L 82 86 Z\" fill=\"#e85d5d\"/>\n    <circle cx=\"70\" cy=\"78\" r=\"4\" fill=\"#c9403a\"/>\n  </svg>", "SVG_FUDEBAKO": "<svg viewBox=\"0 0 140 140\" width=\"100%\" height=\"100%\">\n    <rect x=\"20\" y=\"50\" width=\"100\" height=\"35\" rx=\"10\" fill=\"#5b8fa8\" stroke=\"#2b3a4a\" stroke-width=\"3\"/>\n  <line x1=\"20\" y1=\"67\" x2=\"120\" y2=\"67\" stroke=\"#2b3a4a\" stroke-width=\"2\" stroke-dasharray=\"3 3\"/>\n  \n  <polygon points=\"35,50 40,50 37.5,42\" fill=\"#f0c040\"/>\n  <polygon points=\"50,50 55,50 52.5,42\" fill=\"#e85d5d\"/>\n  </svg>", "SVG_KOKUBAN": "<svg viewBox=\"0 0 140 140\" width=\"100%\" height=\"100%\">\n    <rect x=\"20\" y=\"25\" width=\"100\" height=\"65\" rx=\"3\" fill=\"#3a6b4a\" stroke=\"#8a6a40\" stroke-width=\"8\"/>\n  <line x1=\"35\" y1=\"45\" x2=\"75\" y2=\"45\" stroke=\"#ffffff\" stroke-width=\"2.5\" opacity=\"0.85\"/>\n  <line x1=\"35\" y1=\"58\" x2=\"90\" y2=\"58\" stroke=\"#ffffff\" stroke-width=\"2.5\" opacity=\"0.85\"/>\n  \n  <rect x=\"18\" y=\"90\" width=\"104\" height=\"8\" fill=\"#c9a86a\" stroke=\"#2b3a4a\" stroke-width=\"2\"/>\n  <rect x=\"55\" y=\"83\" width=\"20\" height=\"5\" fill=\"#ffffff\"/>\n  </svg>", "SVG_HAPPA": "<svg viewBox=\"0 0 140 140\" width=\"100%\" height=\"100%\">\n    <path d=\"M 70 20 Q 30 40 30 75 Q 30 105 70 115 Q 110 105 110 75 Q 110 40 70 20 Z\"\n          fill=\"#6aab5a\" stroke=\"#3a6b3a\" stroke-width=\"3\"/>\n    <line x1=\"70\" y1=\"28\" x2=\"70\" y2=\"110\" stroke=\"#3a6b3a\" stroke-width=\"2.5\"/>\n    <path d=\"M 70 45 Q 55 50 45 60 M 70 45 Q 85 50 95 60\" stroke=\"#3a6b3a\" stroke-width=\"1.5\" fill=\"none\"/>\n    <path d=\"M 70 65 Q 55 70 45 80 M 70 65 Q 85 70 95 80\" stroke=\"#3a6b3a\" stroke-width=\"1.5\" fill=\"none\"/>\n    <path d=\"M 70 85 Q 58 88 50 95 M 70 85 Q 82 88 90 95\" stroke=\"#3a6b3a\" stroke-width=\"1.5\" fill=\"none\"/>\n    <line x1=\"70\" y1=\"110\" x2=\"70\" y2=\"122\" stroke=\"#8a6a40\" stroke-width=\"4\" stroke-linecap=\"round\"/>\n  </svg>", "SVG_YUKI": "<svg viewBox=\"0 0 140 140\" width=\"100%\" height=\"100%\">\n    <rect x=\"10\" y=\"10\" width=\"120\" height=\"80\" rx=\"6\" fill=\"#c9dae8\"/>\n    <g fill=\"#ffffff\" stroke=\"#a8c4d8\" stroke-width=\"0.5\">\n      <circle cx=\"30\" cy=\"30\" r=\"4\"/>\n      <circle cx=\"55\" cy=\"20\" r=\"3\"/>\n      <circle cx=\"80\" cy=\"35\" r=\"4.5\"/>\n      <circle cx=\"105\" cy=\"22\" r=\"3.5\"/>\n      <circle cx=\"40\" cy=\"55\" r=\"3.5\"/>\n      <circle cx=\"68\" cy=\"50\" r=\"3\"/>\n      <circle cx=\"95\" cy=\"58\" r=\"4\"/>\n      <circle cx=\"20\" cy=\"70\" r=\"3\"/>\n      <circle cx=\"115\" cy=\"72\" r=\"3.5\"/>\n    </g>\n    <path d=\"M 5 92 Q 20 82 40 90 Q 60 80 80 90 Q 100 82 120 90 Q 130 92 135 90 L 135 120 L 5 120 Z\"\n          fill=\"#ffffff\" stroke=\"#c9d8e4\" stroke-width=\"2\"/>\n    <circle cx=\"95\" cy=\"98\" r=\"10\" fill=\"#ffffff\" stroke=\"#a8c4d8\" stroke-width=\"1.5\"/>\n    <circle cx=\"95\" cy=\"82\" r=\"7\" fill=\"#ffffff\" stroke=\"#a8c4d8\" stroke-width=\"1.5\"/>\n    <circle cx=\"92\" cy=\"80\" r=\"1.2\" fill=\"#2b3a4a\"/>\n    <circle cx=\"98\" cy=\"80\" r=\"1.2\" fill=\"#2b3a4a\"/>\n    <path d=\"M 95 82 L 100 84\" stroke=\"#e8834a\" stroke-width=\"1.5\" stroke-linecap=\"round\"/>\n  </svg>", "SVG_MISOSHIRU": "<svg viewBox=\"0 0 140 140\" width=\"100%\" height=\"100%\">\n    <path d=\"M 55 30 Q 58 20 55 12\" stroke=\"#c9c4b4\" stroke-width=\"3\" fill=\"none\" stroke-linecap=\"round\" opacity=\"0.7\"/>\n    <path d=\"M 70 28 Q 73 16 70 8\" stroke=\"#c9c4b4\" stroke-width=\"3\" fill=\"none\" stroke-linecap=\"round\" opacity=\"0.7\"/>\n    <path d=\"M 85 30 Q 88 20 85 12\" stroke=\"#c9c4b4\" stroke-width=\"3\" fill=\"none\" stroke-linecap=\"round\" opacity=\"0.7\"/>\n    <path d=\"M 30 65 Q 30 100 70 105 Q 110 100 110 65 Z\" fill=\"#8a4a3a\" stroke=\"#5a2a1a\" stroke-width=\"3\"/>\n    <ellipse cx=\"70\" cy=\"65\" rx=\"40\" ry=\"10\" fill=\"#c9895a\" stroke=\"#5a2a1a\" stroke-width=\"3\"/>\n    <ellipse cx=\"70\" cy=\"65\" rx=\"36\" ry=\"8\" fill=\"#d4a574\"/>\n    <rect x=\"58\" y=\"60\" width=\"10\" height=\"8\" fill=\"#faf6e8\" opacity=\"0.9\"/>\n    <path d=\"M 78 62 Q 85 65 80 68 Q 75 66 78 62\" fill=\"#4a7a4a\" opacity=\"0.8\"/>\n    <ellipse cx=\"70\" cy=\"107\" rx=\"18\" ry=\"4\" fill=\"#5a2a1a\"/>\n  </svg>", "SVG_SORA": "<svg viewBox=\"0 0 140 140\" width=\"100%\" height=\"100%\">\n    <rect x=\"10\" y=\"10\" width=\"120\" height=\"90\" rx=\"6\" fill=\"#87ceeb\"/>\n    <circle cx=\"105\" cy=\"30\" r=\"14\" fill=\"#ffe08a\"/>\n    <g fill=\"#ffffff\">\n      <ellipse cx=\"40\" cy=\"35\" rx=\"20\" ry=\"11\"/>\n      <ellipse cx=\"55\" cy=\"30\" rx=\"15\" ry=\"9\"/>\n      <ellipse cx=\"28\" cy=\"30\" rx=\"12\" ry=\"8\"/>\n    </g>\n    <g fill=\"#ffffff\" opacity=\"0.9\">\n      <ellipse cx=\"80\" cy=\"65\" rx=\"16\" ry=\"9\"/>\n      <ellipse cx=\"92\" cy=\"60\" rx=\"12\" ry=\"7\"/>\n    </g>\n    <g fill=\"#ffffff\" opacity=\"0.85\">\n      <ellipse cx=\"30\" cy=\"75\" rx=\"14\" ry=\"8\"/>\n    </g>\n    <rect x=\"10\" y=\"95\" width=\"120\" height=\"8\" fill=\"#8fc06a\"/>\n  </svg>", "SVG_KARAAGE": "<svg viewBox=\"0 0 140 140\" width=\"100%\" height=\"100%\">\n    <rect x=\"88\" y=\"20\" width=\"12\" height=\"42\" rx=\"6\" fill=\"#faf6e8\" stroke=\"#c9c0a8\" stroke-width=\"2\"/>\n    <ellipse cx=\"94\" cy=\"20\" rx=\"9\" ry=\"7\" fill=\"#faf6e8\" stroke=\"#c9c0a8\" stroke-width=\"2\"/>\n    <path d=\"M 30 65 Q 25 90 45 105 Q 70 118 95 100 Q 108 85 95 62 Q 75 48 55 52 Q 38 55 30 65 Z\"\n          fill=\"#d9974a\" stroke=\"#8a5a20\" stroke-width=\"3\"/>\n    <circle cx=\"48\" cy=\"75\" r=\"5\" fill=\"#c9843a\" opacity=\"0.6\"/>\n    <circle cx=\"62\" cy=\"68\" r=\"5\" fill=\"#c9843a\" opacity=\"0.6\"/>\n    <circle cx=\"75\" cy=\"80\" r=\"5\" fill=\"#c9843a\" opacity=\"0.6\"/>\n    <circle cx=\"55\" cy=\"92\" r=\"5\" fill=\"#c9843a\" opacity=\"0.6\"/>\n    <circle cx=\"80\" cy=\"95\" r=\"4\" fill=\"#c9843a\" opacity=\"0.6\"/>\n  </svg>", "SVG_DONGURI": "<svg viewBox=\"0 0 140 140\" width=\"100%\" height=\"100%\">\n    <path d=\"M 45 55 Q 70 35 95 55 Q 95 62 70 65 Q 45 62 45 55 Z\" fill=\"#8a6a40\" stroke=\"#5a4020\" stroke-width=\"2.5\"/>\n    <path d=\"M 50 50 L 90 50 M 48 55 L 92 55 M 52 45 L 88 45\" stroke=\"#5a4020\" stroke-width=\"1\" opacity=\"0.6\"/>\n    <ellipse cx=\"70\" cy=\"88\" rx=\"26\" ry=\"32\" fill=\"#c9954a\" stroke=\"#8a6a30\" stroke-width=\"3\"/>\n    <ellipse cx=\"62\" cy=\"78\" rx=\"8\" ry=\"12\" fill=\"#e0b878\" opacity=\"0.6\"/>\n  </svg>"};
+const WORDS = [{"word": "りんご", "category": "たべもの", "emoji": "🍎"}, {"word": "ばなな", "category": "たべもの", "speechText": "バナナ", "emoji": "🍌"}, {"word": "たまご", "category": "たべもの", "speechText": "卵", "emoji": "🥚"}, {"word": "やさい", "category": "たべもの", "speechText": "野菜", "svg": "SVG_YASAI"}, {"word": "みかん", "category": "たべもの", "emoji": "🍊"}, {"word": "おかし", "category": "たべもの", "speechText": "お菓子", "emoji": "🍬"}, {"word": "ぱん", "category": "たべもの", "speechText": "パン", "emoji": "🍞"}, {"word": "ごはん", "category": "たべもの", "speechText": "ご飯", "emoji": "🍚"}, {"word": "みそしる", "category": "たべもの", "speechText": "味噌汁", "svg": "SVG_MISOSHIRU"}, {"word": "からあげ", "category": "たべもの", "speechText": "唐揚げ", "svg": "SVG_KARAAGE"}, {"word": "みるく", "category": "たべもの", "speechText": "ミルク", "emoji": "🥛"}, {"word": "おちゃ", "category": "たべもの", "speechText": "お茶", "emoji": "🍵"}, {"word": "すいか", "category": "たべもの", "emoji": "🍉"}, {"word": "いちご", "category": "たべもの", "emoji": "🍓"}, {"word": "にく", "category": "たべもの", "speechText": "肉", "emoji": "🥩"}, {"word": "さかな", "category": "たべもの", "speechText": "魚", "emoji": "🐟"}, {"word": "いぬ", "category": "どうぶつ", "speechText": "犬", "emoji": "🐶"}, {"word": "ねこ", "category": "どうぶつ", "speechText": "猫", "emoji": "🐱"}, {"word": "とり", "category": "どうぶつ", "speechText": "鳥", "emoji": "🐦"}, {"word": "かえる", "category": "どうぶつ", "emoji": "🐸"}, {"word": "うさぎ", "category": "どうぶつ", "emoji": "🐰"}, {"word": "ぱんだ", "category": "どうぶつ", "speechText": "パンダ", "emoji": "🐼"}, {"word": "からす", "category": "どうぶつ", "svg": "SVG_KARASU"}, {"word": "とんぼ", "category": "どうぶつ", "svg": "SVG_TONBO"}, {"word": "くま", "category": "どうぶつ", "emoji": "🐻"}, {"word": "うし", "category": "どうぶつ", "speechText": "牛", "emoji": "🐮"}, {"word": "うま", "category": "どうぶつ", "speechText": "馬", "emoji": "🐴"}, {"word": "ぶた", "category": "どうぶつ", "speechText": "豚", "emoji": "🐷"}, {"word": "らいおん", "category": "どうぶつ", "speechText": "ライオン", "emoji": "🦁"}, {"word": "ぞう", "category": "どうぶつ", "emoji": "🐘"}, {"word": "きりん", "category": "どうぶつ", "emoji": "🦒"}, {"word": "さる", "category": "どうぶつ", "emoji": "🐵"}, {"word": "ひよこ", "category": "どうぶつ", "emoji": "🐥"}, {"word": "あり", "category": "どうぶつ", "emoji": "🐜"}, {"word": "はち", "category": "どうぶつ", "emoji": "🐝"}, {"word": "めがね", "category": "みのまわりのもの", "speechText": "眼鏡", "emoji": "👓"}, {"word": "かばん", "category": "みのまわりのもの", "speechText": "カバン", "emoji": "🎒"}, {"word": "ぼうし", "category": "みのまわりのもの", "speechText": "帽子", "emoji": "🧢"}, {"word": "はさみ", "category": "みのまわりのもの", "emoji": "✂️"}, {"word": "とけい", "category": "みのまわりのもの", "speechText": "時計", "svg": "SVG_TOKEI"}, {"word": "つくえ", "category": "みのまわりのもの", "speechText": "机", "svg": "SVG_TSUKUE"}, {"word": "いす", "category": "みのまわりのもの", "speechText": "椅子", "emoji": "🪑"}, {"word": "かさ", "category": "みのまわりのもの", "speechText": "傘", "emoji": "☂️"}, {"word": "えんぴつ", "category": "みのまわりのもの", "speechText": "鉛筆", "emoji": "✏️"}, {"word": "けしごむ", "category": "みのまわりのもの", "speechText": "消しゴム", "svg": "SVG_KESHIGOMU"}, {"word": "のーと", "category": "みのまわりのもの", "speechText": "ノート", "emoji": "📓"}, {"word": "ほん", "category": "みのまわりのもの", "speechText": "本", "emoji": "📖"}, {"word": "かがみ", "category": "みのまわりのもの", "speechText": "鏡", "svg": "SVG_KAGAMI"}, {"word": "さいふ", "category": "みのまわりのもの", "speechText": "財布", "emoji": "👛"}, {"word": "はぶらし", "category": "みのまわりのもの", "speechText": "歯ブラシ", "photoNeeded": true}, {"word": "たおる", "category": "みのまわりのもの", "speechText": "タオル", "photoNeeded": true}, {"word": "おふろ", "category": "せいかつ", "speechText": "お風呂", "emoji": "🛁"}, {"word": "でんき", "category": "せいかつ", "speechText": "電気", "emoji": "💡"}, {"word": "おかね", "category": "せいかつ", "speechText": "お金", "emoji": "💰"}, {"word": "くつ", "category": "せいかつ", "speechText": "靴", "emoji": "👟"}, {"word": "まくら", "category": "せいかつ", "speechText": "枕", "photoNeeded": true}, {"word": "ふとん", "category": "せいかつ", "speechText": "布団", "photoNeeded": true}, {"word": "てれび", "category": "せいかつ", "speechText": "テレビ", "emoji": "📺"}, {"word": "でんわ", "category": "せいかつ", "speechText": "電話", "emoji": "📱"}, {"word": "いえ", "category": "せいかつ", "speechText": "家", "emoji": "🏠"}, {"word": "にわ", "category": "せいかつ", "speechText": "庭", "svg": "SVG_NIWA"}, {"word": "まど", "category": "せいかつ", "speechText": "窓", "svg": "SVG_MADO"}, {"word": "げんかん", "category": "せいかつ", "speechText": "玄関", "svg": "SVG_GENKAN"}, {"word": "かぎ", "category": "せいかつ", "speechText": "鍵", "emoji": "🔑"}, {"word": "あたま", "category": "からだ", "speechText": "頭", "svg": "SVG_ATAMA"}, {"word": "かお", "category": "からだ", "speechText": "顔", "svg": "SVG_KAO"}, {"word": "てのひら", "category": "からだ", "speechText": "手のひら", "emoji": "🖐️"}, {"word": "あし", "category": "からだ", "speechText": "足", "emoji": "🦵"}, {"word": "めだま", "category": "からだ", "speechText": "目玉", "emoji": "👁️"}, {"word": "みみ", "category": "からだ", "speechText": "耳", "emoji": "👂"}, {"word": "はな", "category": "からだ", "speechText": "鼻", "emoji": "👃"}, {"word": "くち", "category": "からだ", "speechText": "口", "emoji": "👄"}, {"word": "ぶらんこ", "category": "がっこう・あそび", "speechText": "ブランコ", "svg": "SVG_BURANKO"}, {"word": "てつぼう", "category": "がっこう・あそび", "speechText": "鉄棒", "svg": "SVG_TETSUBOU"}, {"word": "つみき", "category": "がっこう・あそび", "speechText": "積み木", "svg": "SVG_TSUMIKI"}, {"word": "ぼーる", "category": "がっこう・あそび", "speechText": "ボール", "emoji": "⚽"}, {"word": "たこ", "category": "がっこう・あそび", "speechText": "凧", "emoji": "🪁"}, {"word": "おもちゃ", "category": "がっこう・あそび", "svg": "SVG_OMOCHA"}, {"word": "どんぐり", "category": "がっこう・あそび", "svg": "SVG_DONGURI"}, {"word": "ふでばこ", "category": "がっこう・あそび", "speechText": "筆箱", "svg": "SVG_FUDEBAKO"}, {"word": "こくばん", "category": "がっこう・あそび", "speechText": "黒板", "svg": "SVG_KOKUBAN"}, {"word": "さくら", "category": "きせつ・しぜん", "speechText": "桜", "emoji": "🌸"}, {"word": "はっぱ", "category": "きせつ・しぜん", "speechText": "葉っぱ", "svg": "SVG_HAPPA"}, {"word": "そら", "category": "きせつ・しぜん", "speechText": "空", "svg": "SVG_SORA"}, {"word": "たいよう", "category": "きせつ・しぜん", "speechText": "太陽", "emoji": "☀️"}, {"word": "つき", "category": "きせつ・しぜん", "speechText": "月", "emoji": "🌙"}, {"word": "ほし", "category": "きせつ・しぜん", "speechText": "星", "emoji": "⭐"}, {"word": "あめ", "category": "きせつ・しぜん", "speechText": "雨", "emoji": "🌧️"}, {"word": "ゆき", "category": "きせつ・しぜん", "speechText": "雪", "svg": "SVG_YUKI"}, {"word": "にじ", "category": "きせつ・しぜん", "speechText": "虹", "emoji": "🌈"}, {"word": "くるま", "category": "のりもの", "speechText": "車", "emoji": "🚗"}, {"word": "でんしゃ", "category": "のりもの", "speechText": "電車", "emoji": "🚃"}, {"word": "ばす", "category": "のりもの", "speechText": "バス", "emoji": "🚌"}, {"word": "ひこうき", "category": "のりもの", "speechText": "飛行機", "emoji": "✈️"}, {"word": "ふね", "category": "のりもの", "speechText": "船", "emoji": "🚢"}, {"word": "しんごう", "category": "のりもの", "speechText": "信号", "emoji": "🚦"}, {"word": "あか", "category": "いろ", "speechText": "赤", "emoji": "🔴"}, {"word": "あお", "category": "いろ", "speechText": "青", "emoji": "🔵"}, {"word": "きいろ", "category": "いろ", "speechText": "黄色", "emoji": "🟡"}, {"word": "みどり", "category": "いろ", "speechText": "緑", "emoji": "🟢"}];
+
+const PLAYABLE = WORDS.filter(w => !w.photoNeeded);
+const GRID = 8;
+const SPOT_COUNT = 5;
+const GEM_GOAL = 10;
+
+const LEVELS = [
+  { id:"lv1", label:"レベル1（2もじ）", min:2, max:2 },
+  { id:"lv2", label:"レベル2（3もじ）", min:3, max:3 },
+  { id:"lv3", label:"レベル3（4もじ〜）", min:4, max:99 },
+  { id:"all", label:"ぜんぶ", min:1, max:99 },
+];
+
+const TERRAIN = {
+  0:{name:"うみ",color:"#7ec4e8",walk:false},
+  1:{name:"くさはら",color:"#9fd68a",walk:true},
+  2:{name:"すな",color:"#f0d8a0",walk:true,cat:"たべもの",emoji:"🏖️"},
+  3:{name:"もり",color:"#5a9a5c",walk:true,cat:"どうぶつ",emoji:"🌲"},
+  4:{name:"むら",color:"#c9a86a",walk:true,cat:"みのまわりのもの",emoji:"🏘️"},
+  5:{name:"いえ",color:"#d9a878",walk:true,cat:"せいかつ",emoji:"🏠"},
+  6:{name:"しろ",color:"#b8a8c9",walk:true,cat:"からだ",emoji:"🏰"},
+  7:{name:"こうえん",color:"#f0c060",walk:true,cat:"がっこう・あそび",emoji:"🎠"},
+  8:{name:"やま",color:"#a8988a",walk:true,cat:"きせつ・しぜん",emoji:"⛰️"},
+  9:{name:"みち",color:"#e0d0a8",walk:true,cat:"のりもの",emoji:"🛤️"},
+  10:{name:"はなばたけ",color:"#e8a8c9",walk:true,cat:"いろ",emoji:"🌷"},
+};
+const FEATURES = [2,3,4,5,6,7,8,9,10];
+const CAT_COLORS = {
+  "たべもの":"#e8734a","どうぶつ":"#7a9a5c","みのまわりのもの":"#5b8fa8",
+  "せいかつ":"#a87ba0","からだ":"#c97a6a","がっこう・あそび":"#c99a3e",
+  "きせつ・しぜん":"#5a9ab0","のりもの":"#7a6ab0","いろ":"#b06a9a",
+};
+
+// ---------- ほぞん（localStorage） ----------
+const STORE_KEY = "kotoba-shima-v1";
+let store = {
+  points: 0, gems: 0,
+  photo: null, message: "",
+  learned: {},          // 単語 -> であった回数
+  days: [],             // あそんだ日（YYYY-MM-DD）
+  islandsCleared: 0,
+};
+
+function loadStore() {
+  try {
+    const raw = localStorage.getItem(STORE_KEY);
+    if (raw) store = Object.assign(store, JSON.parse(raw));
+  } catch(e) { console.warn("load failed", e); }
+}
+function saveStore() {
+  try { localStorage.setItem(STORE_KEY, JSON.stringify(store)); }
+  catch(e) { console.warn("save failed", e); }
+}
+function todayStr() {
+  const d = new Date();
+  return d.getFullYear() + "-" + String(d.getMonth()+1).padStart(2,"0") + "-" + String(d.getDate()).padStart(2,"0");
+}
+function markToday() {
+  const t = todayStr();
+  if (!store.days.includes(t)) { store.days.push(t); saveStore(); }
+}
+function streakCount() {
+  if (!store.days.length) return 0;
+  const days = [...store.days].sort().reverse();
+  let streak = 0;
+  let cur = new Date();
+  for (;;) {
+    const s = cur.getFullYear()+"-"+String(cur.getMonth()+1).padStart(2,"0")+"-"+String(cur.getDate()).padStart(2,"0");
+    if (days.includes(s)) { streak++; cur.setDate(cur.getDate()-1); }
+    else break;
+  }
+  return streak;
+}
+
+// ---------- ことば ----------
+function shuffle(a){ a=[...a]; for(let i=a.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[a[i],a[j]]=[a[j],a[i]];} return a; }
+
+function generateIsland() {
+  const m = [];
+  for (let y=0;y<GRID;y++){ const row=[]; for(let x=0;x<GRID;x++){
+    const edge = x===0||y===0||x===GRID-1||y===GRID-1;
+    row.push(edge?0:1);
+  } m.push(row); }
+  const cx=Math.floor(GRID/2), cy=Math.floor(GRID/2);
+  const inner=[];
+  for(let y=1;y<GRID-1;y++) for(let x=1;x<GRID-1;x++){
+    const corridor = x===cx||x===cx-1||y===cy||y===cy-1;
+    if(!corridor) inner.push({x,y});
+  }
+  const cells = shuffle(inner);
+  let pool = shuffle(FEATURES);
+  while(pool.length < SPOT_COUNT) pool = pool.concat(shuffle(FEATURES));
+  pool = pool.slice(0, SPOT_COUNT);
+  for(let i=0;i<Math.min(cells.length, SPOT_COUNT);i++){
+    m[cells[i].y][cells[i].x] = pool[i];
+  }
+  return m;
+}
+
+function buildSpots(map, level) {
+  const spots = {};
+  const used = new Set();
+  // まだ であっていない ことばを優先する（毎日すこしずつ 新しい語に出会うため）
+  const inLevel = PLAYABLE.filter(w => {
+    const len = [...w.word].length;
+    return len >= level.min && len <= level.max;
+  });
+  const fresh = inLevel.filter(w => !store.learned[w.word]);
+  const seen  = inLevel.filter(w =>  store.learned[w.word]);
+  const ordered = [...shuffle(fresh), ...shuffle(seen)];
+
+  const cells = [];
+  for(let y=0;y<GRID;y++) for(let x=0;x<GRID;x++){
+    const t = TERRAIN[map[y][x]];
+    if(t.walk && t.cat) cells.push({x,y,cat:t.cat});
+  }
+  cells.forEach(({x,y,cat}) => {
+    let w = ordered.find(o => o.category===cat && !used.has(o.word));
+    if(!w) w = ordered.find(o => !used.has(o.word));
+    if(w){ used.add(w.word); spots[x+","+y] = w; }
+  });
+  return spots;
+}
+
+function findStart(map){
+  for(let y=0;y<GRID;y++) for(let x=0;x<GRID;x++) if(map[y][x]===1) return {x,y};
+  for(let y=0;y<GRID;y++) for(let x=0;x<GRID;x++) if(TERRAIN[map[y][x]].walk) return {x,y};
+  return {x:1,y:1};
+}
+
+// ---------- 読み上げ ----------
+function speak(text, rate) {
+  try {
+    if(!window.speechSynthesis) return;
+    speechSynthesis.cancel();
+    const u = new SpeechSynthesisUtterance(text);
+    u.lang = "ja-JP"; u.rate = rate || 0.6;
+    speechSynthesis.speak(u);
+  } catch(e){}
+}
+
+function speakWithHighlight(word, speechText, onHl, onDone) {
+  const chars = [...word];
+  const GAP = 700;
+  chars.forEach((ch,i)=> setTimeout(()=>{ onHl(i); speak(ch,0.5); }, i*GAP));
+  setTimeout(()=>{
+    onHl(chars.length);
+    speak(speechText || word, 0.65);
+    if(onDone) onDone();
+  }, chars.length*GAP + 200);
+}
+
+// ---------- 音声認識 ----------
+function getRecognition(){
+  const SR = window.SpeechRecognition || window.webkitSpeechRecognition;
+  return SR ? new SR() : null;
+}
+function normalize(t){
+  if(!t) return "";
+  let s = t.trim();
+  s = s.replace(/[\u30a1-\u30f6]/g, c => String.fromCharCode(c.charCodeAt(0)-0x60));
+  s = s.replace(/[\s。、．，!！?？「」『』・ー〜~]/g,"");
+  const small={"ぁ":"あ","ぃ":"い","ぅ":"う","ぇ":"え","ぉ":"お","ゃ":"や","ゅ":"ゆ","ょ":"よ","っ":"つ","ゎ":"わ"};
+  s = s.replace(/[ぁぃぅぇぉゃゅょっゎ]/g, c => small[c]||c);
+  const dak={"が":"か","ぎ":"き","ぐ":"く","げ":"け","ご":"こ","ざ":"さ","じ":"し","ず":"す","ぜ":"せ","ぞ":"そ","だ":"た","ぢ":"ち","づ":"つ","で":"て","ど":"と","ば":"は","び":"ひ","ぶ":"ふ","べ":"へ","ぼ":"ほ","ぱ":"は","ぴ":"ひ","ぷ":"ふ","ぺ":"へ","ぽ":"ほ"};
+  s = s.replace(/[がぎぐげござじずぜぞだぢづでどばびぶべぼぱぴぷぺぽ]/g, c => dak[c]||c);
+  return s;
+}
+function lev(a,b){
+  const m=a.length,n=b.length,dp=[];
+  for(let i=0;i<=m;i++){dp[i]=[i];}
+  for(let j=0;j<=n;j++){dp[0][j]=j;}
+  for(let i=1;i<=m;i++) for(let j=1;j<=n;j++){
+    dp[i][j]=Math.min(dp[i-1][j]+1,dp[i][j-1]+1,dp[i-1][j-1]+(a[i-1]===b[j-1]?0:1));
+  }
+  return dp[m][n];
+}
+function spokenOk(spoken, target){
+  const a=normalize(spoken), b=normalize(target);
+  if(!a||!b) return false;
+  if(a===b || a.includes(b)) return true;
+  return lev(a,b) <= (b.length<=2 ? 0 : 1);
+}
+
+// ---------- じょうたい ----------
+let level = LEVELS[0];
+let island = generateIsland();
+let pos = findStart(island);
+let spots = {};
+let collected = {};
+let active = null;     // 今ひらいている単語
+let showAnswer = false;
+let listening = false;
+let voiceAttempts = 0;
+let hlIndex = -1;
+let started = false;
+let readingTestWord = null;
+
+const $ = id => document.getElementById(id);
+
+// ---------- びょうが ----------
+function renderLevels(){
+  const box = $("levelButtons");
+  box.innerHTML = "";
+  LEVELS.forEach(lv=>{
+    const b=document.createElement("button");
+    b.className = "btn-level" + (level.id===lv.id?" active":"");
+    b.textContent = lv.label;
+    b.onclick = ()=>{ level = lv; renderLevels(); };
+    box.appendChild(b);
+  });
+}
+
+function renderStreak(){
+  const s = streakCount();
+  const learnedCount = Object.keys(store.learned).length;
+  $("streakBox").innerHTML =
+    "🔥 れんぞく " + s + "日<br>" +
+    "📚 であった ことば " + learnedCount + " / " + PLAYABLE.length + "こ<br>" +
+    "🏝️ クリアした しま " + store.islandsCleared + "こ";
+}
+
+function renderMap(){
+  const cell = 42;
+  const map = $("map");
+  map.style.width = GRID*cell+"px";
+  map.style.height = GRID*cell+"px";
+  map.innerHTML = "";
+  for(let y=0;y<GRID;y++) for(let x=0;x<GRID;x++){
+    const info = TERRAIN[island[y][x]];
+    const key = x+","+y;
+    const d = document.createElement("div");
+    d.className="tile";
+    d.style.left = x*cell+"px"; d.style.top = y*cell+"px";
+    d.style.width = cell+"px"; d.style.height = cell+"px";
+    d.style.background = info.color;
+    const isPlayer = pos.x===x && pos.y===y;
+    if(isPlayer){
+      d.innerHTML = '<div class="hop" style="font-size:26px;filter:drop-shadow(0 2px 3px rgba(0,0,0,.25))">🐣</div>';
+    } else {
+      let inner = "";
+      if(info.emoji) inner += '<span style="opacity:.5">'+info.emoji+'</span>';
+      if(spots[key] && !collected[key]) inner += '<span class="sparkle" style="position:absolute;font-size:16px">✨</span>';
+      if(spots[key] && collected[key]) inner += '<span style="position:absolute;font-size:14px;opacity:.6">✅</span>';
+      d.innerHTML = inner;
+    }
+    map.appendChild(d);
+  }
+}
+
+function renderStats(){
+  const total = Object.keys(spots).length;
+  const got = Object.keys(collected).length;
+  $("progressLabel").textContent = got + " / " + total + " こ みつけた";
+  $("pointsLabel").textContent = store.points + " ポイント";
+  const gb = $("gemBox"); gb.innerHTML = "";
+  for(let i=0;i<GEM_GOAL;i++){
+    const s=document.createElement("span");
+    s.textContent="💎";
+    s.style.fontSize="13px";
+    s.style.opacity = i < store.gems ? "1" : "0.25";
+    gb.appendChild(s);
+  }
+  // ごほうびプレビュー
+  if(store.photo){
+    $("rewardPreview").classList.remove("hidden");
+    $("rewardPreviewImg").src = store.photo;
+    $("rewardPreviewText").textContent = store.message || ("たからもの あと "+(GEM_GOAL-store.gems)+"こ");
+  } else {
+    $("rewardPreview").classList.add("hidden");
+  }
+  // クリア判定
+  if(total>0 && got===total){ $("clearBox").classList.remove("hidden"); }
+  else { $("clearBox").classList.add("hidden"); }
+}
+
+function illustHtml(w){
+  if(w.svg) return SVGS[w.svg] || "";
+  if(w.emoji) return w.emoji;
+  return "📷";
+}
+
+function renderPopupWord(){
+  const chars=[...active.word];
+  const color = CAT_COLORS[active.category] || "#4a6b5e";
+  $("popupWordHl").innerHTML = chars.map((c,i)=>{
+    const full = hlIndex >= chars.length;
+    const on = full || hlIndex===i;
+    return '<span style="color:'+(on?color:"#3a3a34")+';transition:color .15s">'+c+'</span>';
+  }).join("");
+}
+
+function openWord(key,w){
+  active = Object.assign({key}, w);
+  showAnswer=false; voiceAttempts=0; hlIndex=-1; listening=false;
+  $("popupWord").textContent = w.word;
+  $("popupBefore").classList.remove("hidden");
+  $("popupAfter").classList.add("hidden");
+  $("voiceMsg").textContent = "";
+  $("revealBtn").classList.add("hidden");
+  $("popupPrompt").textContent = "マイクを おしたまま こえに だして よんでみよう";
+  const mic = $("micBtn");
+  mic.classList.remove("listening","hidden");
+  mic.textContent = "🎤";
+  mic.style.background = CAT_COLORS[w.category] || "#4a6b5e";
+  $("volumeWrap").classList.add("hidden");
+  $("volumeBar").style.width = "0%";
+  stopVolumeMeter();
+  $("wordOverlay").classList.remove("hidden");
+}
+
+function revealAnswer(){
+  showAnswer = true;
+  $("popupBefore").classList.add("hidden");
+  $("popupAfter").classList.remove("hidden");
+  $("popupIllust").innerHTML = illustHtml(active);
+  hlIndex = -1; renderPopupWord();
+  speakWithHighlight(active.word, active.speechText, i=>{ hlIndex=i; renderPopupWord(); });
+}
+
+function collectWord(){
+  collected[active.key] = true;
+  store.points += 10;
+  store.learned[active.word] = (store.learned[active.word]||0) + 1;
+  store.gems += 1;
+  let showReward = false;
+  if(store.gems >= GEM_GOAL){ store.gems = 0; showReward = true; }
+  saveStore();
+  $("wordOverlay").classList.add("hidden");
+  active = null;
+  renderMap(); renderStats();
+  if(showReward) setTimeout(showRewardCard, 400);
+  // 島クリア判定
+  const total=Object.keys(spots).length, got=Object.keys(collected).length;
+  if(total>0 && got===total){ store.islandsCleared++; saveStore(); }
+}
+
+function showRewardCard(){
+  const c = $("rewardContent");
+  if(store.photo){
+    c.innerHTML = '<img src="'+store.photo+'" style="width:100%;border-radius:16px;margin-bottom:14px;box-shadow:0 4px 12px rgba(0,0,0,.15)">' +
+      (store.message ? '<p style="font-size:15px;color:#3a3a34;font-weight:700;margin:0 0 18px;line-height:1.6">'+store.message+'</p>' : '');
+  } else {
+    c.innerHTML = '<p style="font-size:14px;color:#8a8a7c;margin:0 0 18px;line-height:1.6">この がめんを<br>「おうちの ひとに みせてね」</p>';
+  }
+  $("rewardOverlay").classList.remove("hidden");
+}
+
+// ---------- うごき ----------
+function move(dx,dy){
+  if(!started || active) return;
+  const nx=pos.x+dx, ny=pos.y+dy;
+  if(nx<0||nx>=GRID||ny<0||ny>=GRID) return;
+  if(!TERRAIN[island[ny][nx]].walk) return;
+  pos={x:nx,y:ny};
+  renderMap();
+  const key = nx+","+ny;
+  if(spots[key] && !collected[key]) openWord(key, spots[key]);
+}
+
+function startIsland(){
+  island = generateIsland();
+  pos = findStart(island);
+  spots = buildSpots(island, level);
+  collected = {};
+  active = null;
+  started = true;
+  markToday();
+  $("startScreen").classList.add("hidden");
+  $("gameScreen").classList.remove("hidden");
+  $("clearBox").classList.add("hidden");
+  renderMap(); renderStats();
+}
+
+// ---------- マイク（おしている あいだ だけ ろくおん） ----------
+let rec = null;
+let audioCtx = null, analyser = null, micStream = null, volumeRAF = null;
+let gotResult = false;
+
+// マイクの音量をひろって、こえに はんのうする バーを うごかす。
+// 「ちゃんと ひろえている」ことが 目に見えると 子どもが 安心して 声を出せる。
+async function startVolumeMeter(){
+  try{
+    micStream = await navigator.mediaDevices.getUserMedia({ audio: true });
+    audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+    const src = audioCtx.createMediaStreamSource(micStream);
+    analyser = audioCtx.createAnalyser();
+    analyser.fftSize = 512;
+    src.connect(analyser);
+    const data = new Uint8Array(analyser.frequencyBinCount);
+
+    const bar = $("volumeBar");
+    const hint = $("volumeHint");
+    let peaked = false;
+
+    const tick = ()=>{
+      analyser.getByteFrequencyData(data);
+      let sum = 0;
+      for(let i=0;i<data.length;i++) sum += data[i];
+      const avg = sum / data.length;
+      const pct = Math.min(100, Math.round(avg * 2.5));
+      bar.style.width = pct + "%";
+      if(pct > 25){
+        bar.style.background = "#5a9a5c";
+        if(!peaked){ peaked = true; hint.textContent = "こえが きこえてるよ！"; }
+      } else if(!peaked){
+        bar.style.background = "#c9c4b4";
+      }
+      volumeRAF = requestAnimationFrame(tick);
+    };
+    tick();
+  }catch(err){
+    // 音量メーターが使えなくても、音声認識そのものは動くことがあるので止めない
+    $("volumeHint").textContent = "";
+  }
+}
+
+function stopVolumeMeter(){
+  if(volumeRAF) cancelAnimationFrame(volumeRAF);
+  volumeRAF = null;
+  if(micStream){ micStream.getTracks().forEach(t=>t.stop()); micStream = null; }
+  if(audioCtx){ try{ audioCtx.close(); }catch(e){} audioCtx = null; }
+  analyser = null;
+  $("volumeBar").style.width = "0%";
+}
+
+function beginListening(){
+  if(!active || listening) return;
+  rec = getRecognition();
+  const msg = $("voiceMsg");
+  if(!rec){
+    msg.textContent = "この きかいでは マイクが つかえないみたい。したの ボタンで すすんでね";
+    $("revealBtn").classList.remove("hidden");
+    return;
+  }
+
+  gotResult = false;
+  listening = true;
+  rec.lang = "ja-JP";
+  rec.interimResults = true;   // とちゅうの けっかも うけとって 反応を見せる
+  rec.maxAlternatives = 5;
+  rec.continuous = true;       // ボタンを はなすまで ずっと きく
+
+  $("micBtn").classList.add("listening");
+  $("micBtn").textContent = "🔴";
+  $("popupPrompt").textContent = "🎤 いま いってね！（ボタンを おしたまま）";
+  $("volumeWrap").classList.remove("hidden");
+  $("volumeHint").textContent = "こえを ひろっています…";
+  msg.textContent = "";
+
+  startVolumeMeter();
+
+  let finalText = "";
+  let allAlts = [];
+
+  rec.onresult = e => {
+    for(let i=e.resultIndex; i<e.results.length; i++){
+      const r = e.results[i];
+      for(let j=0;j<r.length;j++) allAlts.push(r[j].transcript);
+      if(r.isFinal) finalText += r[0].transcript;
+      else $("volumeHint").textContent = "きこえてるよ：" + r[0].transcript;
+    }
+    if(allAlts.some(a => spokenOk(a, active.word))){
+      gotResult = true;
+      stopListening(true, allAlts);
+    }
+  };
+
+  rec.onerror = e => {
+    const code = (e && e.error) || "unknown";
+    if(code === "not-allowed" || code === "service-not-allowed"){
+      stopListening(false, allAlts, "マイクが つかえませんでした（きょかが ひつようです）。したの ボタンで すすんでね", true);
+    } else if(code === "no-speech"){
+      // 無音は しっぱいに かぞえない
+      stopListening(false, allAlts, "こえが きこえなかったよ。ボタンを おしたまま いってみてね", false, true);
+    }
+  };
+
+  rec.onend = ()=>{
+    if(listening && !gotResult) stopListening(false, allAlts);
+  };
+
+  try{ rec.start(); }
+  catch(err){
+    stopListening(false, [], "マイクを はじめられませんでした。したの ボタンで すすんでね", true);
+  }
+}
+
+function stopListening(matched, alts, customMsg, forceReveal, skipCount){
+  if(!listening) return;
+  listening = false;
+  try{ if(rec) rec.stop(); }catch(e){}
+  stopVolumeMeter();
+
+  $("micBtn").classList.remove("listening");
+  $("micBtn").textContent = "🎤";
+  $("volumeWrap").classList.add("hidden");
+
+  const msg = $("voiceMsg");
+
+  if(matched){
+    $("popupPrompt").textContent = "🎉 よめたね！";
+    $("micBtn").classList.add("hidden");
+    msg.textContent = "";
+    setTimeout(revealAnswer, 900);
+    return;
+  }
+
+  if(customMsg){
+    msg.textContent = customMsg;
+  } else {
+    const heard = (alts && alts[0]) ? alts[0] : "";
+    msg.innerHTML = "うーん、もういちど ゆっくり いってみよう" +
+      (heard ? '<br><span style="font-size:11px;color:#b0a898">きこえたことば：'+heard+'</span>' : "");
+  }
+  $("popupPrompt").textContent = "マイクを おしたまま こえに だして よんでみよう";
+
+  if(!skipCount) voiceAttempts++;
+  if(voiceAttempts >= 2 || forceReveal) $("revealBtn").classList.remove("hidden");
+}
+
+// ---------- 設定パネル ----------
+function toKatakana(t){ return t.replace(/[\u3041-\u3096]/g, c=>String.fromCharCode(c.charCodeAt(0)+0x60)); }
+
+function renderReadingPanel(){
+  const p = $("readingPanel");
+  if(!readingTestWord){ p.innerHTML=""; return; }
+  const w = readingTestWord;
+  const cands=[]; const seen=new Set();
+  const push=(label,text)=>{ if(!text||seen.has(text))return; seen.add(text); cands.push({label,text}); };
+  push("いま つかっている", w.speechText || w.word);
+  push("ひらがな", w.word);
+  push("カタカナ", toKatakana(w.word));
+  if(w.speechText) push("かんじ など", w.speechText);
+
+  p.innerHTML = '<div style="background:#fff;border:2px solid #7a9a5c;border-radius:12px;padding:12px 14px;margin-bottom:10px">' +
+    '<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px">' +
+    '<span style="font-size:15px;font-weight:800;color:#3a3a34">「'+w.word+'」</span>' +
+    '<button id="closeReading" style="border:none;background:transparent;color:#a8a498;font-size:16px;padding:4px">✕</button></div>' +
+    '<div style="display:flex;flex-direction:column;gap:6px">' +
+    cands.map((c,i)=>'<button class="readCand" data-text="'+c.text+'" style="display:flex;justify-content:space-between;align-items:center;padding:9px 12px;border-radius:9px;border:1px solid #ddd9cc;background:#fafaf6;text-align:left">' +
+      '<span style="font-size:14px;font-weight:700;color:#3a3a34">🔊 '+c.text+'</span>' +
+      '<span style="font-size:10.5px;color:#a8a498">'+c.label+'</span></button>').join("") +
+    '</div></div>';
+
+  $("closeReading").onclick = ()=>{ readingTestWord=null; renderReadingPanel(); renderChips(); };
+  p.querySelectorAll(".readCand").forEach(b=>{
+    b.onclick = ()=> speak(b.dataset.text, 0.65);
+  });
+}
+
+function renderChips(){
+  const box = $("wordChips");
+  box.innerHTML = "";
+  WORDS.forEach(w=>{
+    const b=document.createElement("button");
+    const isSel = readingTestWord && readingTestWord.word===w.word;
+    b.style.cssText = "padding:6px 10px;border-radius:8px;font-size:12.5px;font-weight:600;color:#3a3a34;" +
+      "border:" + (isSel ? "2px solid #7a9a5c" : (w.speechText ? "1.5px solid #cfe0c0" : "1px solid #ddd9cc")) + ";" +
+      "background:" + (isSel ? "#e6f0dd" : "#fff") + ";";
+    b.innerHTML = w.word + (w.speechText ? '<span style="font-size:10px;color:#7a9a5c"> →'+w.speechText+'</span>' : "");
+    b.onclick = ()=>{
+      readingTestWord = w;
+      speak(w.speechText || w.word, 0.65);
+      renderReadingPanel(); renderChips();
+    };
+    box.appendChild(b);
+  });
+}
+
+function renderRecord(){
+  const learned = Object.keys(store.learned).length;
+  const totalTimes = Object.values(store.learned).reduce((a,b)=>a+b,0);
+  $("recordSummary").innerHTML =
+    "であった ことば：" + learned + " / " + PLAYABLE.length + "こ<br>" +
+    "よんだ かいすう：" + totalTimes + "かい<br>" +
+    "あそんだ 日：" + store.days.length + "日（れんぞく " + streakCount() + "日）<br>" +
+    "クリアした しま：" + store.islandsCleared + "こ<br>" +
+    "ためた ポイント：" + store.points;
+}
+
+// 画像あっしゅく
+function compressImage(file){
+  return new Promise((resolve,reject)=>{
+    const r=new FileReader();
+    r.onerror=()=>reject(new Error("よみこみ失敗"));
+    r.onload=()=>{
+      const img=new Image();
+      img.onerror=()=>reject(new Error("画像形式に 対応していません"));
+      img.onload=()=>{
+        let {width,height}=img;
+        const MAX=1200;
+        if(width>MAX||height>MAX){ const s=MAX/Math.max(width,height); width=Math.round(width*s); height=Math.round(height*s); }
+        const cv=document.createElement("canvas");
+        cv.width=width; cv.height=height;
+        const ctx=cv.getContext("2d");
+        if(!ctx){ reject(new Error("canvas なし")); return; }
+        ctx.drawImage(img,0,0,width,height);
+        let q=0.85, url=cv.toDataURL("image/jpeg",q), tries=0;
+        while(url.length > 1200000 && tries<8){
+          q-=0.1;
+          if(q<0.3){ width=Math.round(width*0.85); height=Math.round(height*0.85);
+            cv.width=width; cv.height=height; ctx.drawImage(img,0,0,width,height); q=0.6; }
+          url=cv.toDataURL("image/jpeg",q); tries++;
+        }
+        resolve(url);
+      };
+      img.src=r.result;
+    };
+    r.readAsDataURL(file);
+  });
+}
+
+// ---------- イベント ----------
+document.querySelectorAll(".dpad button").forEach(b=>{
+  b.onclick = ()=> move(parseInt(b.dataset.dx), parseInt(b.dataset.dy));
+});
+document.addEventListener("keydown", e=>{
+  if(e.key==="ArrowUp") move(0,-1);
+  else if(e.key==="ArrowDown") move(0,1);
+  else if(e.key==="ArrowLeft") move(-1,0);
+  else if(e.key==="ArrowRight") move(1,0);
+});
+
+$("startBtn").onclick = startIsland;
+$("nextIslandBtn").onclick = startIsland;
+$("backToLevelBtn").onclick = ()=>{
+  started=false;
+  $("gameScreen").classList.add("hidden");
+  $("startScreen").classList.remove("hidden");
+  renderStreak();
+};
+// マイクは「おしている あいだ だけ」ろくおんする。
+// タッチ（スマホ）と マウス（PC）の りょうほうに 対応する。
+(function(){
+  const mic = $("micBtn");
+
+  const press = (e)=>{ e.preventDefault(); beginListening(); };
+  const release = (e)=>{ e.preventDefault(); if(listening) stopListening(false, []); };
+
+  mic.addEventListener("touchstart", press, { passive:false });
+  mic.addEventListener("touchend", release, { passive:false });
+  mic.addEventListener("touchcancel", release, { passive:false });
+
+  mic.addEventListener("mousedown", press);
+  mic.addEventListener("mouseup", release);
+  mic.addEventListener("mouseleave", ()=>{ if(listening) stopListening(false, []); });
+
+  // 押したまま指が動いても録音が止まらないよう、既定のスクロール等は抑える
+  mic.addEventListener("contextmenu", e=>e.preventDefault());
+})();
+$("revealBtn").onclick = revealAnswer;
+$("replayBtn").onclick = ()=>{
+  hlIndex=-1; renderPopupWord();
+  speakWithHighlight(active.word, active.speechText, i=>{ hlIndex=i; renderPopupWord(); });
+};
+$("collectBtn").onclick = collectWord;
+$("rewardCloseBtn").onclick = ()=> $("rewardOverlay").classList.add("hidden");
+
+$("settingsBtn").onclick = ()=>{
+  $("settingsOverlay").classList.remove("hidden");
+  $("messageInput").value = store.message || "";
+  if(store.photo){ $("settingsPhotoPreview").src = store.photo; $("settingsPhotoPreview").classList.remove("hidden"); }
+  renderChips(); renderReadingPanel(); renderRecord();
+};
+$("settingsCloseBtn").onclick = ()=>{
+  store.message = $("messageInput").value;
+  saveStore();
+  $("settingsOverlay").classList.add("hidden");
+  renderStats();
+};
+$("messageInput").onchange = ()=>{ store.message = $("messageInput").value; saveStore(); renderStats(); };
+
+$("photoInput").onchange = async e => {
+  const file = e.target.files && e.target.files[0];
+  if(!file) return;
+  const msg = $("uploadMsg");
+  msg.style.color="#8a8a7c"; msg.textContent="ほぞん中…";
+  try{
+    const url = await compressImage(file);
+    store.photo = url; saveStore();
+    $("settingsPhotoPreview").src = url;
+    $("settingsPhotoPreview").classList.remove("hidden");
+    msg.style.color="#5a9a5c"; msg.textContent="✓ ほぞんしました";
+    renderStats();
+    setTimeout(()=>{ msg.textContent=""; }, 2000);
+  }catch(err){
+    msg.style.color="#d94a3a";
+    msg.textContent = "ほぞんできませんでした：" + (err.message||"不明");
+  }
+};
+
+$("resetBtn").onclick = ()=>{
+  if(confirm("きろくを ぜんぶ けしますか？（ポイント・たからもの・ごほうび写真も けえます）")) {
+    store = { points:0, gems:0, photo:null, message:"", learned:{}, days:[], islandsCleared:0 };
+    saveStore();
+    $("settingsPhotoPreview").classList.add("hidden");
+    $("messageInput").value="";
+    renderRecord(); renderStats(); renderStreak();
+  }
+};
+
+// ---------- しょきか ----------
+loadStore();
+$("spotCountLabel").textContent = SPOT_COUNT;
+document.querySelectorAll(".gemGoalLabel, #gemGoalLabel").forEach(el => el.textContent = GEM_GOAL);
+renderLevels();
+renderStreak();
+
+</script>
+
+</body>
+</html>
