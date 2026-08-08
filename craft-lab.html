@@ -1,0 +1,2079 @@
+<!DOCTYPE html>
+
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>ブロックのラボ</title>
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="ブロックのラボ">
+<meta name="theme-color" content="#17202b">
+<link id="mf" rel="manifest">
+<link id="ati" rel="apple-touch-icon">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=DotGothic16&family=M+PLUS+Rounded+1c:wght@500;800&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --bg:#17202b;
+    --panel:#23303f;
+    --tile:#33475c;
+    --tile-hi:#415b76;
+    --edge:#0e151c;
+    --torch:#ffab3d;
+    --leaf:#6fbf5b;
+    --rare:#ff6b6b;
+    --ink:#eef4fa;
+    --dim:#8ea3b8;
+    --r:10px;
+  }
+  *{box-sizing:border-box;-webkit-tap-highlight-color:transparent;}
+  html,body{margin:0;padding:0;}
+  body{
+    background:var(--bg);
+    background-image:
+      linear-gradient(rgba(255,255,255,.022) 1px,transparent 1px),
+      linear-gradient(90deg,rgba(255,255,255,.022) 1px,transparent 1px);
+    background-size:28px 28px;
+    color:var(--ink);
+    font-family:"M PLUS Rounded 1c",-apple-system,BlinkMacSystemFont,"Hiragino Maru Gothic ProN","Yu Gothic",sans-serif;
+    font-weight:500;
+    min-height:100vh;
+    padding:0 0 24px;
+    overscroll-behavior:none;
+  }
+  .wrap{max-width:560px;margin:0 auto;padding:0 12px;}
+  body{padding-top:0;}
+
+/* –– header –– */
+header{
+padding:12px 12px 8px;
+display:flex;align-items:center;gap:10px;
+}
+h1{
+font-family:“DotGothic16”,monospace;
+font-size:20px;letter-spacing:.06em;
+margin:0;color:var(–torch);
+text-shadow:0 2px 0 var(–edge);
+}
+.count{
+margin-left:auto;
+font-family:“DotGothic16”,monospace;
+font-size:15px;color:var(–dim);
+background:var(–panel);border:2px solid var(–edge);
+border-radius:var(–r);padding:4px 10px;
+}
+.count b{color:var(–leaf);}
+.gear{
+background:var(–panel);border:2px solid var(–edge);color:var(–dim);
+border-radius:var(–r);width:38px;height:34px;font-size:16px;cursor:pointer;
+}
+
+/* –– goals –– */
+.goals{display:flex;gap:8px;margin-bottom:12px;}
+.goal{
+flex:1;background:var(–panel);border:2px solid var(–edge);
+border-radius:var(–r);padding:8px 4px;text-align:center;
+border-bottom-width:5px;
+}
+.goal .g-emoji{font-size:26px;line-height:1.2;filter:grayscale(1) brightness(.42);}
+.goal .g-name{font-size:12px;font-weight:800;color:var(–dim);margin-top:3px;}
+.goal.found{border-color:var(–torch);background:#3a2a18;}
+.goal.found .g-emoji{filter:none;}
+.goal.found .g-name{color:var(–torch);}
+
+/* –– bench –– */
+.bench{
+background:var(–panel);border:3px solid var(–edge);
+border-radius:14px;padding:10px 12px 12px;margin-bottom:14px;
+border-bottom-width:7px;
+position:sticky;top:0;z-index:30;
+box-shadow:0 10px 20px -8px rgba(8,12,17,.9);
+}
+.bench-count{
+text-align:center;font-family:“DotGothic16”,monospace;font-size:12px;
+color:var(–dim);margin-bottom:8px;
+}
+.bench-count b{color:var(–leaf);}
+.wrap{padding-bottom:0;}
+.slots{display:flex;align-items:center;justify-content:center;gap:10px;}
+.slot{
+width:82px;height:92px;border-radius:var(–r);
+border:3px dashed #4b6480;background:#1b2735;
+display:flex;flex-direction:column;align-items:center;justify-content:center;
+cursor:pointer;transition:transform .12s;
+}
+.slot.full{border-style:solid;border-color:var(–torch);background:var(–tile);}
+.slot .s-emoji{font-size:34px;line-height:1;}
+.slot .s-name{font-size:13px;font-weight:800;margin-top:5px;color:#fff;}
+.slot .s-hint{font-size:11px;color:#5d7793;}
+.plus{font-family:“DotGothic16”,monospace;font-size:24px;color:var(–dim);}
+.arrow{font-family:“DotGothic16”,monospace;font-size:20px;color:var(–dim);}
+.result{
+width:92px;height:92px;border-radius:var(–r);
+border:3px solid var(–edge);background:#1b2735;
+display:flex;flex-direction:column;align-items:center;justify-content:center;
+}
+.result.on{background:#2c4a2a;border-color:var(–leaf);}
+.result .r-emoji{font-size:38px;line-height:1;}
+.result .r-name{font-size:13px;font-weight:800;margin-top:5px;color:#fff;}
+.result .r-q{font-size:30px;color:#3f5a76;font-family:“DotGothic16”,monospace;}
+
+.msg{
+text-align:center;margin-top:10px;min-height:22px;
+font-size:14px;color:var(–dim);
+}
+.msg.new{color:var(–torch);font-weight:800;font-size:16px;}
+.msg.rare{color:var(–rare);font-weight:800;font-size:17px;}
+
+.bench-actions{display:flex;gap:8px;margin-top:10px;}
+.btn{
+flex:1;background:var(–tile);border:2px solid var(–edge);border-bottom-width:5px;
+color:var(–ink);border-radius:var(–r);padding:9px;font-size:14px;
+font-family:inherit;font-weight:800;cursor:pointer;
+}
+.btn:active{transform:translateY(2px);border-bottom-width:3px;}
+.btn.hint{background:#4a3a1e;color:var(–torch);}
+.btn.why{background:#1e4a3a;color:#7fe0b0;}
+.btn.appeal{background:#4a2a5e;color:#e0b3f5;}
+.apTop{
+position:sticky;top:-16px;z-index:5;background:var(–panel);
+padding:6px 0 4px;margin-top:-6px;
+}
+.chips{display:flex;flex-direction:column;gap:6px;margin-bottom:10px;}
+.chips button{
+text-align:left;background:#2b3b4d;border:2px solid var(–edge);border-bottom-width:4px;
+color:var(–ink);border-radius:9px;padding:9px 11px;font-size:13px;
+font-family:inherit;font-weight:800;cursor:pointer;line-height:1.4;
+}
+.chips button:active{transform:translateY(2px);border-bottom-width:2px;}
+.chips .lbl2{font-size:11px;color:#8ea3b8;font-weight:500;margin-bottom:1px;}
+.fld2{
+background:#1b2735;border:3px solid var(–torch);border-radius:var(–r);
+color:#fff;padding:12px;font-size:20px;font-weight:800;min-height:52px;
+line-height:1.4;word-break:break-all;
+}
+.caret{
+display:inline-block;width:2px;height:22px;background:var(–torch);
+vertical-align:-4px;animation:blink 1s step-end infinite;
+}
+@keyframes blink{50%{opacity:0;}}
+.kbTop{display:grid;grid-template-columns:repeat(5,1fr);gap:5px;margin-bottom:5px;}
+.kb-grid{display:grid;grid-template-columns:repeat(5,1fr);gap:5px;}
+.kb{
+background:var(–tile);border:2px solid var(–edge);border-bottom-width:4px;
+color:#fff;border-radius:9px;height:46px;font-size:22px;font-weight:800;
+font-family:inherit;cursor:pointer;padding:0;
+}
+.kb:active{transform:translateY(2px);border-bottom-width:2px;}
+.kb.fn{background:#3d5170;font-size:16px;}
+.kb.fn#kbKana.on{background:var(–leaf);color:#0d2410;}
+.kb.blank{visibility:hidden;}
+.fld{
+flex:1;background:#1b2735;border:2px solid #4b6480;border-radius:var(–r);
+color:var(–ink);padding:10px;font-size:15px;font-family:inherit;min-width:0;
+}
+.mic{
+flex:none;width:46px;background:#4a2a5e;border:2px solid var(–edge);
+border-radius:var(–r);font-size:18px;cursor:pointer;color:#fff;
+}
+.mic.rec{background:#b03050;}
+.prop{
+background:#1b2735;border:2px solid #3d5170;border-radius:var(–r);
+padding:10px;margin-bottom:10px;font-size:13px;
+}
+.prop .pt{font-size:15px;font-weight:800;color:var(–torch);margin-bottom:4px;}
+.prop .pr{color:#bcd0e3;line-height:1.6;margin-bottom:8px;}
+.emo{display:flex;flex-wrap:wrap;gap:5px;margin-bottom:9px;}
+.emo button{
+width:34px;height:34px;font-size:19px;background:#2b3b4d;
+border:2px solid var(–edge);border-radius:7px;cursor:pointer;
+}
+.emo button.pick{border-color:var(–torch);background:#4a3a1e;}
+.pfld{
+width:100%;background:#1b2735;border:2px solid #4b6480;border-radius:8px;
+color:var(–ink);padding:8px;font-size:13px;font-family:inherit;
+line-height:1.6;margin-bottom:8px;resize:vertical;
+}
+.fl{font-size:11px;color:#8ea3b8;margin-bottom:4px;}
+.emo button.noemo{width:auto;padding:0 9px;font-size:12px;font-weight:800;color:var(–dim);}
+.item .i-name.only{font-size:15px;margin-top:0;padding:6px 2px;}
+.slot .s-name.only,.result .r-name.only{font-size:15px;margin-top:0;}
+#propBadge{
+display:inline-block;background:var(–rare);color:#fff;border-radius:9px;
+font-size:11px;padding:1px 7px;margin-left:6px;
+}
+.why-box{
+display:none;margin-top:10px;padding:11px 12px;
+background:#16342a;border:2px solid #2f7d5f;border-radius:var(–r);
+font-size:15px;line-height:1.7;color:#c9f5e2;
+}
+.why-box.on{display:block;animation:pop .3s ease-out;}
+.why-box.fic{background:#3a2440;border-color:#9b62b8;color:#efd4fb;}
+.why-box.lik{background:#3d3418;border-color:#c9a227;color:#f7ecc4;}
+.why-box.lik .talk{border-top-color:#c9a227;color:#ffdf7a;}
+.badge.lik{background:#c9a227;}
+.badge.doubt{background:#5a8fd6;}
+.why-box .flag{
+margin-top:10px;background:transparent;border:2px dashed #7d93a8;color:#a9c0d6;
+border-radius:9px;padding:7px 10px;font-size:12px;font-family:inherit;font-weight:800;
+cursor:pointer;width:100%;
+}
+.why-box .flag.done{border-style:solid;border-color:#5a8fd6;color:#bcd9ff;background:#1d3348;}
+.cls{display:flex;gap:5px;margin:8px 0;}
+.cls button{
+flex:1;background:#2b3b4d;border:2px solid var(–edge);border-bottom-width:4px;color:var(–dim);
+border-radius:8px;padding:7px 2px;font-size:12px;font-family:inherit;font-weight:800;cursor:pointer;
+}
+.cls button.on{background:var(–leaf);color:#0d2410;}
+.why-box .talk{
+margin-top:9px;padding-top:9px;border-top:1px dashed #9b62b8;
+font-size:14px;color:#e8bcfa;font-weight:800;
+}
+.vrow2{padding:8px 0;border-bottom:1px solid #2e3f52;}
+.vline{display:flex;align-items:center;gap:6px;}
+.vline + .vline{margin-top:5px;}
+.vfld{
+flex:1;min-width:0;background:#1b2735;border:2px solid #3d5170;border-radius:7px;
+color:var(–ink);padding:7px;font-size:13px;font-family:inherit;
+}
+.vfld.on{border-color:var(–leaf);}
+.vrow{display:flex;align-items:center;gap:6px;padding:6px 0;border-bottom:1px solid #2e3f52;}
+.vrow .vn{flex:1;font-size:14px;}
+.vrow .vb{
+background:#33475c;border:2px solid var(–edge);color:var(–dim);
+border-radius:7px;padding:5px 9px;font-size:12px;font-family:inherit;cursor:pointer;flex:none;
+}
+.vrow .vb.pick{background:var(–leaf);color:#0d2410;font-weight:800;}
+.badge{
+display:inline-block;background:#9b62b8;color:#fff;border-radius:5px;
+font-size:10px;padding:1px 5px;margin-left:5px;vertical-align:1px;
+}
+.log-row{
+display:flex;gap:8px;align-items:baseline;padding:7px 0;
+border-bottom:1px solid #2e3f52;font-size:13px;
+}
+.log-row .n{color:var(–torch);font-family:“DotGothic16”,monospace;flex:none;}
+.log-row .q{flex:1;color:var(–ink);}
+.log-row .d{color:#6d8299;font-size:11px;flex:none;}
+
+/* –– collection –– */
+.sec-label{
+font-family:“DotGothic16”,monospace;font-size:14px;color:var(–dim);
+margin:0 2px 8px;letter-spacing:.08em;
+}
+.grid{
+display:grid;grid-template-columns:repeat(auto-fill,minmax(84px,1fr));gap:9px;
+}
+.item{
+background:var(–tile);border:2px solid var(–edge);border-bottom-width:5px;
+border-radius:var(–r);padding:8px 2px 6px;text-align:center;cursor:pointer;
+}
+.item:active{transform:translateY(2px);border-bottom-width:3px;}
+.item.sel{background:var(–tile-hi);border-color:var(–torch);}
+.item.fic{background:linear-gradient(160deg,#4a2a5e,#33204a);border-color:#8b4fb0;}
+.item.mine{background:linear-gradient(160deg,#5a4418,#3d2e10);border-color:#d6a12e;}
+.slot.full.fic,.result.on.fic{background:#4a2a5e;border-color:#b06fd6;}
+.slot.full.mine,.result.on.mine{background:#5a4418;border-color:#e2b53f;}
+.legend{display:flex;gap:12px;flex-wrap:wrap;margin:0 2px 10px;font-size:11px;color:var(–dim);}
+.legend i{display:inline-block;width:11px;height:11px;border-radius:3px;margin-right:4px;vertical-align:-1px;}
+.item .i-emoji{font-size:32px;line-height:1.1;}
+.item .i-name{font-size:13px;font-weight:800;margin-top:5px;line-height:1.35;color:#fff;letter-spacing:.01em;word-break:keep-all;}
+.item.fresh{animation:pop .45s ease-out;}
+.item.live::after{
+content:””;position:absolute;top:5px;right:5px;width:9px;height:9px;
+border-radius:50%;background:var(–torch);box-shadow:0 0 7px var(–torch);
+}
+.item{position:relative;}
+
+svg.ico{width:1em;height:1em;vertical-align:-.12em;}
+img.ph{
+width:1.05em;height:1.05em;object-fit:cover;border-radius:7px;
+vertical-align:-.15em;display:inline-block;
+}
+.phrow{display:flex;align-items:center;gap:8px;padding:7px 0;border-bottom:1px solid #2e3f52;}
+.phrow .pv{
+width:42px;height:42px;flex:none;border-radius:8px;background:#1b2735;
+border:2px solid #3d5170;display:flex;align-items:center;justify-content:center;
+font-size:22px;overflow:hidden;
+}
+.phrow .pv img{width:100%;height:100%;object-fit:cover;}
+.phrow .pn{flex:1;font-size:14px;font-weight:800;}
+.phlbl{
+background:#33475c;border:2px solid var(–edge);border-bottom-width:4px;color:#fff;
+border-radius:8px;padding:7px 10px;font-size:12px;font-weight:800;cursor:pointer;flex:none;
+}
+.phrow input[type=file]{display:none;}
+
+@keyframes pop{
+0%{transform:scale(.4);opacity:0;}
+60%{transform:scale(1.15);}
+100%{transform:scale(1);opacity:1;}
+}
+@keyframes shake{
+0%,100%{transform:translateX(0);}
+25%{transform:translateX(-6px);}
+75%{transform:translateX(6px);}
+}
+.shake{animation:shake .3s;}
+@keyframes burst{
+0%{transform:scale(.3);opacity:0;}
+50%{transform:scale(1.3);opacity:1;}
+100%{transform:scale(1);opacity:1;}
+}
+.burst{animation:burst .5s ease-out;}
+
+/* –– modal –– */
+.veil{
+position:fixed;inset:0;background:rgba(8,12,17,.82);
+display:none;align-items:center;justify-content:center;padding:16px;z-index:50;
+}
+.veil.on{display:flex;}
+.toast{
+position:fixed;left:50%;bottom:26px;transform:translateX(-50%) translateY(20px);
+background:#23303f;border:2px solid var(–torch);color:var(–ink);
+padding:12px 18px;border-radius:12px;font-size:14px;z-index:90;
+opacity:0;pointer-events:none;transition:opacity .2s,transform .2s;max-width:88vw;text-align:center;
+}
+.toast.on{opacity:1;transform:translateX(-50%) translateY(0);}
+.sheet{
+background:var(–panel);border:3px solid var(–edge);border-radius:14px;
+padding:16px;max-width:440px;width:100%;max-height:82vh;overflow-y:auto;
+}
+.sheet h2{font-family:“DotGothic16”,monospace;font-size:17px;margin:0 0 12px;color:var(–torch);}
+.row{display:flex;align-items:center;gap:10px;padding:9px 0;border-bottom:1px solid #2e3f52;font-size:14px;}
+.row:last-of-type{border-bottom:none;}
+.row .lbl{flex:1;}
+.sw{
+width:50px;height:28px;border-radius:14px;background:#3d5170;border:none;
+position:relative;cursor:pointer;flex:none;
+}
+.sw.on{background:var(–leaf);}
+.sw::after{
+content:””;position:absolute;top:3px;left:3px;width:22px;height:22px;
+border-radius:50%;background:#fff;transition:left .15s;
+}
+.sw.on::after{left:25px;}
+.recipes{font-size:13px;line-height:1.9;color:var(–dim);}
+.recipes .rc{color:var(–ink);font-weight:800;}
+.gyo{
+font-family:“DotGothic16”,monospace;font-size:13px;color:var(–torch);
+border-bottom:1px solid #3d5170;margin:14px 0 7px;padding-bottom:3px;letter-spacing:.1em;
+}
+.danger{background:#5a2626;color:#ffc9c9;}
+
+.break-note{
+background:#3a2a18;border:2px solid var(–torch);border-radius:var(–r);
+padding:10px;margin-bottom:12px;font-size:13px;color:var(–torch);text-align:center;
+}
+
+@media (prefers-reduced-motion:reduce){
+*{animation:none!important;transition:none!important;}
+}
+</style>
+
+</head>
+<body>
+
+<div class="wrap">
+  <header>
+    <h1>ブロックのラボ</h1>
+    <div class="count">はっけん <b id="cnt">6</b>/<span id="tot">44</span></div>
+    <button class="gear" id="gearBtn" aria-label="おとなメニュー">⚙</button>
+  </header>
+
+  <div id="breakNote" class="break-note" style="display:none">
+    たくさんつくったね。すこし きゅうけい しよう ☕
+  </div>
+
+  <div class="goals" id="goals"></div>
+
+  <div class="bench" id="bench">
+    <div class="bench-count">はっけん <b id="cnt2">7</b>/<span id="tot2">54</span></div>
+    <div class="slots">
+      <div class="slot" id="slotA"><div class="s-hint">えらぶ</div></div>
+      <div class="plus">+</div>
+      <div class="slot" id="slotB"><div class="s-hint">えらぶ</div></div>
+      <div class="arrow">▶</div>
+      <div class="result" id="result"><div class="r-q">?</div></div>
+    </div>
+    <div class="msg" id="msg">したから ふたつ えらんでね</div>
+    <div class="why-box" id="whyBox"></div>
+    <div class="bench-actions">
+      <button class="btn" id="clearBtn">もどす</button>
+      <button class="btn hint" id="hintBtn">ヒント</button>
+      <button class="btn why" id="whyBtn" style="display:none">なんで？</button>
+      <button class="btn appeal" id="appealBtn" style="display:none">でも できるよ！</button>
+    </div>
+  </div>
+
+  <p class="sec-label">つくったもの ずかん</p>
+  <div class="legend">
+    <span><i style="background:#33475c"></i>ほんとうの こと</span>
+    <span><i style="background:#4a2a5e"></i>おはなしの せかい</span>
+    <span><i style="background:#5a4418"></i>じぶんで かんがえた</span>
+    <span><i style="background:#ffab3d;border-radius:50%"></i>まだ なにか つくれる</span>
+  </div>
+  <div class="grid" id="grid"></div>
+</div>
+
+<div class="veil" id="askVeil">
+  <div class="sheet" style="max-width:360px">
+    <div id="askText" style="font-size:15px;line-height:1.7;margin-bottom:16px"></div>
+    <div style="display:flex;gap:8px">
+      <button class="btn" id="askNo">やめる</button>
+      <button class="btn hint" id="askYes">はい</button>
+    </div>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<div class="veil" id="appealVeil">
+  <div class="sheet">
+    <h2>でも できると おもう？</h2>
+    <div class="apTop">
+      <div id="appealPair" style="text-align:center;font-size:16px;font-weight:800;margin-bottom:9px"></div>
+      <div id="apQ" style="font-size:15px;font-weight:800;margin-bottom:6px"></div>
+      <div id="apField" class="fld2"><span id="apText"></span><span class="caret"></span></div>
+      <div id="apHint" style="font-size:12px;color:#8ea3b8;margin:5px 0 8px"></div>
+    </div>
+    <div id="apChips" class="chips"></div>
+
+```
+<div class="kbTop">
+  <button class="kb fn" data-fn="dak">゛</button>
+  <button class="kb fn" data-fn="han">゜</button>
+  <button class="kb fn" data-fn="small">小</button>
+  <button class="kb fn" data-fn="bs">けす</button>
+  <button class="kb fn" id="kbKana">ア</button>
+</div>
+<div class="kb-grid" id="kbGrid"></div>
+
+<div id="apMsg" style="font-size:14px;color:var(--torch);min-height:18px;margin:10px 0 8px"></div>
+<div style="display:flex;gap:8px">
+  <button class="btn" id="apBack">もどる</button>
+  <button class="btn hint" id="apNext">つぎへ</button>
+</div>
+```
+
+  </div>
+</div>
+
+<div class="veil" id="veil">
+  <div class="sheet">
+    <h2>おとなメニュー</h2>
+    <div class="row"><span class="lbl">よみあげ（おと）</span><button class="sw on" id="swSpeak"></button></div>
+    <div class="row"><span class="lbl">つくれる ものが ひかる</span><button class="sw on" id="swGlow"></button></div>
+    <div class="row"><span class="lbl">キーボードの おと</span><button class="sw on" id="swKey"></button></div>
+    <div class="row"><span class="lbl">きゅうけいの おしらせ</span><button class="sw on" id="swBreak"></button></div>
+    <div class="row"><span class="lbl">アイコンを しゃしんに する</span><button class="btn" id="phBtn" style="flex:none;padding:6px 12px">ひらく</button></div>
+    <div id="phBox" style="display:none;margin-bottom:12px">
+      <div class="fl">その場で撮る／アルバムから選ぶ、どちらもできます。写真は 128×128 に縮小してこの端末だけに保存されます（外部には送られません）。実物の写真は、現実のものと結びつけるのに役立ちます。</div>
+      <input id="phFind" class="pfld" placeholder="なまえで さがす">
+      <div id="phList"></div>
+    </div>
+    <div class="row"><span class="lbl">レシピを なおす</span><button class="btn" id="editBtn" style="flex:none;padding:6px 12px">ひらく</button></div>
+    <div id="editBox" style="display:none;margin-bottom:12px">
+      <div class="fl">なおしたい 組み合わせを えらんでください</div>
+      <div style="display:flex;gap:6px;align-items:center;margin-bottom:8px">
+        <select id="edA" class="pfld" style="margin:0"></select>
+        <span style="font-weight:800">＋</span>
+        <select id="edB" class="pfld" style="margin:0"></select>
+      </div>
+      <div id="edNow" style="font-size:13px;color:var(--torch);margin-bottom:8px"></div>
+      <div id="edForm"></div>
+    </div>
+    <div class="row"><span class="lbl">データの ほぞん・ふくげん</span><button class="btn" id="bakBtn" style="flex:none;padding:6px 12px">ひらく</button></div>
+    <div id="bakBox" style="display:none;margin-bottom:12px">
+      <div class="fl">下の文字をすべてコピーして、メモ等に保管してください。別の端末やURLでも、貼り付けて「よみこむ」で復元できます。</div>
+      <textarea id="bakText" class="pfld" rows="4"></textarea>
+      <div style="display:flex;gap:8px;margin-bottom:10px">
+        <button class="btn" id="bakCopy">コピー</button>
+        <button class="btn hint" id="bakLoad">はりつけて よみこむ</button>
+      </div>
+      <div class="fl">ほかの タブレットに うつすときは、こちらが かんたんです（しゃしんも ふくまれます）。</div>
+      <div style="display:flex;gap:8px">
+        <button class="btn hint" id="bakSave">ファイルに ほぞん</button>
+        <label class="btn" style="text-align:center;line-height:1.6">ファイルから よみこむ
+          <input type="file" id="bakFile" accept="application/json,.json" style="display:none">
+        </label>
+      </div>
+    </div>
+    <div class="row"><span class="lbl">「ちがうかも？」の きろく<span id="doubtBadge"></span></span><button class="btn" id="doubtBtn" style="flex:none;padding:6px 12px">ひらく</button></div>
+    <div id="doubtList" style="display:none;margin-bottom:12px"></div>
+    <div class="row"><span class="lbl">あたらしい レシピの ていあん<span id="propBadge"></span></span><button class="btn" id="propBtn" style="flex:none;padding:6px 12px">ひらく</button></div>
+    <div id="propList" style="display:none;margin-bottom:12px"></div>
+    <div class="row"><span class="lbl">はつおん おためし</span><button class="btn" id="voiceBtn" style="flex:none;padding:6px 12px">ひらく</button></div>
+    <div id="voiceList" style="display:none;margin-bottom:12px"></div>
+    <div class="row"><span class="lbl">「なんで？」の きろく</span><button class="btn" id="logBtn" style="flex:none;padding:6px 12px">ひらく</button></div>
+    <div id="logList" class="recipes" style="display:none;margin-top:4px;margin-bottom:12px"></div>
+    <div class="row"><span class="lbl">レシピいちらん</span><button class="btn" id="recipeBtn" style="flex:none;padding:6px 12px">ひらく</button></div>
+    <div class="row"><span class="lbl">さいしょから やりなおす</span><button class="btn danger" id="resetBtn" style="flex:none;padding:6px 12px">リセット</button></div>
+    <div id="recipeList" class="recipes" style="display:none;margin-top:12px"></div>
+    <button class="btn" id="closeBtn" style="margin-top:14px">とじる</button>
+  </div>
+</div>
+
+<script>
+/* ============================================================
+   ブロックのラボ — アイテム定義
+   speak: 読み上げ用テキスト（自然な発音になる表記を選ぶ）
+   ============================================================ */
+const SVG_LAVA = '<svg class="ico" viewBox="0 0 32 32"><path d="M4 20h24v8H4z" fill="#c0392b"/><path d="M4 20c3-4 5 1 8-2s5 3 8 0 5 2 8 2v3H4z" fill="#ff7a1a"/><circle cx="11" cy="25" r="1.6" fill="#ffd23f"/><circle cx="21" cy="24" r="1.3" fill="#ffd23f"/></svg>';
+const SVG_RING = '<svg class="ico" viewBox="0 0 32 32"><circle cx="16" cy="16" r="11" fill="none" stroke="#f5c211" stroke-width="5"/><circle cx="16" cy="16" r="11" fill="none" stroke="#fff08a" stroke-width="1.6"/></svg>';
+
+const SVG_KAJI = '<svg class="ico" viewBox="0 0 32 32"><path d="M6 28V15l10-7 10 7v13z" fill="#4a3b33" stroke="#2b211c" stroke-width="1.4"/><path d="M11 28V20h5v8z" fill="#2b211c"/><path d="M16 3c2 4 5 5 5 9a5 5 0 0 1-10 0c0-2 1-3 2-4 0 2 1 2 2 2 1-3-1-4 1-7z" fill="#ff7a1a"/><path d="M23 10c1 2 3 3 3 5a3 3 0 0 1-6 0c0-2 2-3 3-5z" fill="#ffb347"/><path d="M16 8c1 2 2 3 2 4.5a2 2 0 0 1-4 0C14 11 15 10 16 8z" fill="#ffe14d"/></svg>';
+const SVG_CAMP = '<svg class="ico" viewBox="0 0 32 32"><path d="M6 25l20-6M26 25L6 19" stroke="#a9744a" stroke-width="3" stroke-linecap="round"/><path d="M16 4c3 4 6 6 6 10a6 6 0 0 1-12 0c0-2 1-3 2-4 0 2 1 3 2 3 1-3-1-6 2-9z" fill="#ff8a1a"/><path d="M16 11c1.5 2 3 3 3 5a3 3 0 0 1-6 0c0-2 2-3 3-5z" fill="#ffe14d"/></svg>';
+const SVG_MECHA = '<svg class="ico" viewBox="0 0 32 32"><path d="M9 22c-1-4 0-8 3-10 1-3 4-5 7-4 2 1 2 3 1 4 2 1 3 4 2 6l3 2-3 1 1 3-4-2-1 3-2-3-3 3-1-3-4 2 1-3-3-1z" fill="#9aa8b5" stroke="#5c6b78" stroke-width="1.2" stroke-linejoin="round"/><circle cx="18.5" cy="12" r="1.7" fill="#ff4d4d"/><path d="M12 19h9" stroke="#5c6b78" stroke-width="1.2"/></svg>';
+const SVG_MAGICPICK = '<svg class="ico" viewBox="0 0 32 32"><path d="M14 16l10 10" stroke="#a9744a" stroke-width="3" stroke-linecap="round"/><path d="M5 13c4-5 12-5 16 0-5-2-11-2-16 0z" fill="#7ee0ff" stroke="#3ba8cc" stroke-width="1.3" stroke-linejoin="round"/><path d="M9 6l1 2 2 1-2 1-1 2-1-2-2-1 2-1z" fill="#ffe14d"/><path d="M24 9l.8 1.6L26.4 11l-1.6.8L24 13.4l-.8-1.6L21.6 11l1.6-.4z" fill="#ffe14d"/></svg>';
+const SVG_YAKI = '<svg class="ico" viewBox="0 0 32 32"><path d="M26 16c0 0-4 6-11 6S4 16 4 16s4-6 11-6 11 6 11 6z" fill="#c98a4b"/><path d="M26 16c0 0-4 6-11 6S4 16 4 16s4-6 11-6 11 6 11 6z" fill="none" stroke="#8a5a2b" stroke-width="1.5"/><path d="M11 11.5l1.5 9M16 10.6l1.5 10.8" stroke="#7a4a22" stroke-width="1.6"/><path d="M26 16l4-4v8l-4-4z" fill="#c98a4b" stroke="#8a5a2b" stroke-width="1.2"/><circle cx="8" cy="15" r="1.3" fill="#3a2414"/></svg>';
+
+const ITEMS = {
+  mizu:{n:"みず", s:"みず", k:"水", e:"💧"},
+  tsuchi:{n:"つち", s:"つち", k:"土", e:"🟫"},
+  hi:{n:"ひ", s:"ひ", k:"火", e:"🔥"},
+  kaze:{n:"かぜ", s:"かぜ", k:"風", e:"💨"},
+  tane:{n:"たね", s:"たね", k:"種", e:"🌱"},
+  tamago:{n:"たまご", s:"たまご", k:"卵", e:"🥚"},
+  yuki:{n:"ゆき", s:"ゆき", k:"雪", e:"❄️"},
+
+  doro:{n:"どろ", s:"どろ", k:"泥", e:"🟤"},
+  ishi:{n:"いし", s:"いし", k:"石", e:"🪨"},
+  yuge:{n:"ゆげ", s:"ゆげ", k:"湯気", e:"♨️"},
+  suna:{n:"すな", s:"すな", k:"砂", e:"🏜️"},
+  umi:{n:"うみ", s:"うみ", k:"海", e:"🌊"},
+  yama:{n:"やま", s:"やま", k:"山", e:"⛰️"},
+  tatsumaki:{n:"たつまき", s:"たつまき", k:"竜巻", e:"🌪️"},
+  koori:{n:"こおり", s:"こおり", k:"氷", e:"🧊"},
+  renga:{n:"レンガ", s:"レンガ", k:"レンガ", e:"🧱"},
+  garasu:{n:"ガラス", s:"ガラス", k:"ガラス", e:"🔷"},
+  kazan:{n:"かざん", s:"かざん", k:"火山", e:"🌋"},
+  yougan:{n:"ようがん", s:"ようがん", k:"溶岩", e:SVG_LAVA},
+  yukiyama:{n:"ゆきやま", s:"ゆきやま", k:"雪山", e:"🏔️"},
+
+  sakana:{n:"さかな", s:"さかな", k:"魚", e:"🐟"},
+  tokage:{n:"とかげ", s:"とかげ", k:"トカゲ", e:"🦎"},
+  kyouryuu:{n:"きょうりゅう", s:"きょうりゅう", k:"恐竜", e:"🦕"},
+  gojira:{n:"ゴジラ", s:"ゴジラ", k:"ゴジラ", e:"🦖", rare:1},
+
+  kusa:{n:"くさ", s:"くさ", k:"草", e:"🌿"},
+  ki:{n:"き", s:"き", k:"木", e:"🌳"},
+  mori:{n:"もり", s:"もり", k:"森", e:"🌲"},
+  doubutsu:{n:"どうぶつ", s:"どうぶつ", k:"動物", e:"🐾"},
+  sonic:{n:"ソニック", s:"ソニック", k:"ソニック", e:"🦔", rare:1},
+  ring:{n:"リング", s:"リング", k:"リング", e:SVG_RING},
+
+  tsuruhashi:{n:"つるはし", s:"つるはし", k:"ツルハシ", e:"⛏️"},
+  tetsu:{n:"てつ", s:"てつ", k:"鉄", e:"🔩"},
+  sumi:{n:"すみ", s:"すみ", k:"炭", e:"⬛"},
+  daiya:{n:"ダイヤモンド", s:"ダイヤモンド", k:"ダイヤモンド", e:"💎"},
+  kin:{n:"きん", s:"きん", k:"金", e:"🥇"},
+  ken:{n:"ダイヤのけん", s:"ダイヤのけん", k:"ダイヤの剣", e:"⚔️", rare:1},
+
+  ita:{n:"いた", s:"いた", k:"板", e:"🪵"},
+  doa:{n:"ドア", s:"ドア", k:"ドア", e:"🚪"},
+  ie:{n:"いえ", s:"いえ", k:"家", e:"🏠"},
+  kowareie:{n:"こわれたいえ", s:"こわれたいえ", k:"壊れた家", e:"🏚️"},
+  mado:{n:"まど", s:"まど", k:"窓", e:"🪟"},
+  yakizakana:{n:"やきざかな", s:"やきざかな", k:"焼き魚", e:SVG_YAKI},
+  medama:{n:"めだまやき", s:"めだまやき", k:"目玉焼き", e:"🍳"},
+  kaji:{n:"かじ", s:"かじ", k:"火事", e:SVG_KAJI},
+  camp:{n:"キャンプファイヤー", s:"キャンプファイヤー", k:"キャンプファイヤー", e:SVG_CAMP},
+  dragon:{n:"ドラゴン", s:"ドラゴン", k:"ドラゴン", e:"🐉"},
+  beam:{n:"ビーム", s:"ビーム", k:"ビーム", e:"⚡"},
+  robot:{n:"ロボット", s:"ロボット", k:"ロボット", e:"🤖"},
+  mecha:{n:"メカゴジラ", s:"メカゴジラ", k:"メカゴジラ", e:SVG_MECHA},
+  magicpick:{n:"まほうのつるはし", s:"まほうのつるはし", k:"魔法のツルハシ", e:SVG_MAGICPICK},
+  hero:{n:"ヒーロー", s:"ヒーロー", k:"ヒーロー", e:"🦸"},
+  ningyo:{n:"にんぎょ", s:"にんぎょ", k:"人魚", e:"🧜"},
+  yukiotoko:{n:"ゆきおとこ", s:"ゆきおとこ", k:"雪男", e:"⛄"},
+  oshiro:{n:"おしろ", s:"おしろ", k:"お城", e:"🏰"},
+  kumo:{n:"くも", s:"くも", k:"雲", e:"☁️"},
+  ame:{n:"あめ", s:"あめ", k:"雨", e:"🌧️"},
+  niji:{n:"にじ", s:"にじ", k:"虹", e:"🌈"},
+  taiyou:{n:"たいよう", s:"たいよう", k:"太陽", e:"☀️"},
+  kaminari:{n:"かみなり", s:"かみなり", k:"かみなり", e:"🌩️"},
+  kawa:{n:"かわ", s:"かわ", k:"川", e:"🏞️"},
+  hana:{n:"はな", s:"はな", k:"花", e:"🌸"},
+  kudamono:{n:"くだもの", s:"くだもの", k:"果物", e:"🍎"},
+  juice:{n:"ジュース", s:"ジュース", k:"ジュース", e:"🥤"},
+  cake:{n:"ケーキ", s:"ケーキ", k:"ケーキ", e:"🍰"},
+  ice:{n:"アイス", s:"アイス", k:"アイス", e:"🍦"},
+  tori:{n:"とり", s:"とり", k:"鳥", e:"🐦"},
+  mushi:{n:"むし", s:"むし", k:"虫", e:"🦋"},
+  kujira:{n:"くじら", s:"くじら", k:"クジラ", e:"🐋"},
+  kame:{n:"かめ", s:"かめ", k:"カメ", e:"🐢"},
+  fune:{n:"ふね", s:"ふね", k:"船", e:"⛵"},
+  hashi:{n:"はし", s:"はし", k:"橋", e:"🌉"},
+  machi:{n:"まち", s:"まち", k:"町", e:"🏙️"},
+  takara:{n:"たからばこ", s:"たからばこ", k:"宝箱", e:"📦"},
+  kanmuri:{n:"かんむり", s:"かんむり", k:"かんむり", e:"👑"},
+  obake:{n:"おばけ", s:"おばけ", k:"おばけ", e:"👻"},
+  tsue:{n:"まほうのつえ", s:"まほうのつえ", k:"魔法のつえ", e:"🪄"},
+  uchusen:{n:"うちゅうせん", s:"うちゅうせん", k:"宇宙船", e:"🚀"},
+  gochisou:{n:"ごちそう", s:"ごちそう", k:"ごちそう", e:"🍱"}
+};
+
+const BASE = ["mizu","tsuchi","hi","kaze","tane","tamago","yuki"];
+const GOALS = ["gojira","sonic","ken"];
+
+const RECIPES = [
+  /* --- どろ：土でも砂でも、水でも海でも成り立つ --- */
+  ["mizu","tsuchi","doro"], ["suna","mizu","doro"],
+  ["tsuchi","umi","doro"],  ["suna","umi","doro"],
+
+  /* --- いし：溶岩が冷えても石になる --- */
+  ["tsuchi","hi","ishi"],   ["mizu","yougan","ishi"],
+  ["koori","yougan","ishi"],["umi","yougan","ishi"],
+
+  /* --- すな：石がけずれても砂になる --- */
+  ["tsuchi","kaze","suna"], ["ishi","umi","suna"], ["ishi","kaze","suna"],
+
+  /* --- ゆげ / みず：あたためる・ひやす・とかす --- */
+  ["mizu","hi","yuge"],     ["hi","umi","yuge"],
+  ["hi","koori","mizu"],    ["hi","yuki","mizu"],    ["kaze","yuge","mizu"], ["hi","yukiyama","mizu"],
+
+  /* --- うみ・やま・はやさ・こおり --- */
+  ["mizu","mizu","umi"],
+  ["ishi","ishi","yama"],   ["ishi","tsuchi","yama"],
+  ["kaze","kaze","tatsumaki"],
+  ["yuki","yuki","koori"],  ["yuki","mizu","koori"], ["mizu","yukiyama","koori"],
+  ["yuki","yama","yukiyama"], ["koori","yama","yukiyama"],
+
+  /* --- レンガ・ガラス：焼くとかたまる、砂は熱でガラスに --- */
+  ["doro","hi","renga"],    ["doro","doro","renga"],
+  ["hi","suna","garasu"],   ["suna","yougan","garasu"], ["kazan","suna","garasu"],
+
+  /* --- 火山・溶岩 --- */
+  ["hi","yama","kazan"],    ["yama","yougan","kazan"], ["yougan","yougan","kazan"],
+  ["ishi","kazan","yougan"],["hi","ishi","yougan"],    ["kazan","kazan","yougan"],
+
+  /* --- たまご → いきもの --- */
+  ["tamago","mizu","sakana"],   ["tamago","umi","sakana"],
+  ["sakana","tsuchi","tokage"], ["ishi","sakana","tokage"], ["tamago","tsuchi","tokage"],
+  ["tokage","yama","kyouryuu"], ["mori","tokage","kyouryuu"], ["tokage","tokage","kyouryuu"],
+  ["kyouryuu","yougan","gojira"], ["kazan","kyouryuu","gojira"], ["kyouryuu","umi","gojira"],
+
+  /* --- たね → しょくぶつ → どうぶつ → ソニック --- */
+  ["tane","tsuchi","kusa"],   ["doro","tane","kusa"],   ["tane","mizu","kusa"], ["tane","tane","kusa"],
+  ["kusa","kusa","ki"],       ["kusa","tsuchi","ki"],   ["kusa","mizu","ki"],   ["tane","kusa","ki"],
+  ["ki","ki","mori"],         ["ki","tsuchi","mori"],   ["ki","yama","mori"],   ["ki","tane","mori"],
+  ["tamago","mori","doubutsu"], ["tamago","kusa","doubutsu"], ["tamago","ki","doubutsu"],
+  ["doubutsu","tatsumaki","sonic"],
+  ["kin","sonic","ring"],     ["kin","kin","ring"],
+
+  /* --- どうぐ・こうぶつ（マイクラ） --- */
+  ["ishi","ki","tsuruhashi"], ["ishi","ita","tsuruhashi"], ["ki","tetsu","tsuruhashi"],
+  ["tsuruhashi","yama","tetsu"], ["ishi","tsuruhashi","tetsu"],
+  ["hi","ki","sumi"],         ["hi","mori","sumi"],    ["hi","ita","sumi"],
+  ["sumi","yama","daiya"],    ["ishi","sumi","daiya"], ["sumi","sumi","daiya"],
+  ["tetsu","yougan","kin"],   ["kazan","tetsu","kin"],
+  ["daiya","tetsu","ken"],    ["daiya","ita","ken"],   ["daiya","ki","ken"],
+
+  /* --- けんちく --- */
+  ["ki","tsuruhashi","ita"],  ["mori","tsuruhashi","ita"],
+  ["ita","ita","doa"],        ["ita","ki","doa"],
+  ["renga","renga","ie"],     ["ita","renga","ie"],  ["doa","ita","ie"], ["doa","renga","ie"],
+  ["gojira","ie","kowareie"], ["ie","kazan","kowareie"], ["ie","yougan","kowareie"],
+  ["garasu","ita","mado"],    ["garasu","tetsu","mado"],
+
+  /* --- りょうり：火・炭・溶岩で やける --- */
+  ["sakana","hi","yakizakana"], ["sakana","sumi","yakizakana"], ["sakana","yougan","yakizakana"],
+  ["tamago","hi","medama"],     ["tamago","sumi","medama"],     ["tamago","yougan","medama"],
+  ["yakizakana","medama","gochisou"],
+  ["hi","sumi","camp"],
+  ["camp","sakana","yakizakana"], ["camp","tamago","medama"],
+
+  /* --- おはなしの せかい（そうぞうの レシピ） --- */
+  ["kyouryuu","hi","dragon"],     ["tokage","hi","dragon"],   ["kazan","tamago","dragon"],
+  ["gojira","hi","beam"],         ["gojira","yougan","beam"],
+  ["tetsu","tetsu","robot"],      ["tetsu","tsuruhashi","robot"],
+  ["gojira","robot","mecha"],     ["kyouryuu","robot","mecha"],
+  ["daiya","tsuruhashi","magicpick"],
+  ["ken","sonic","hero"],         ["ken","robot","hero"],
+  ["doubutsu","sakana","ningyo"],
+  ["doubutsu","yuki","yukiotoko"],["doubutsu","yukiyama","yukiotoko"],
+  ["ie","ie","oshiro"],           ["ie","renga","oshiro"],
+
+  /* --- ふやした レシピ（おなじものを いろんな みちで つくれる） --- */
+  ["tsuchi","yuki","doro"],
+  ["tsuchi","tsuchi","ishi"],
+  ["doro","ishi","yama"],
+  ["koori","koori","umi"],
+  ["kazan","mizu","yuge"],
+  ["umi","yuki","koori"],
+  ["doro","kazan","renga"],
+  ["doro","sumi","renga"],
+  ["suna","sumi","garasu"],
+  ["camp","suna","garasu"],
+  ["yama","yama","kazan"],
+  ["hi","kazan","yougan"],
+  ["tane","yama","kusa"],
+  ["doro","kusa","ki"],
+  ["kusa","yama","ki"],
+  ["ki","mizu","mori"],
+  ["ki","kusa","mori"],
+  ["tamago","yama","doubutsu"],
+  ["tamago","tamago","sakana"],
+  ["suna","tamago","tokage"],
+  ["sakana","yama","tokage"],
+  ["ki","tokage","kyouryuu"],
+  ["tamago","tokage","kyouryuu"],
+  ["beam","kyouryuu","gojira"],
+  ["kyouryuu","kyouryuu","gojira"],
+  ["ita","tetsu","tsuruhashi"],
+  ["tsuruhashi","tsuruhashi","tetsu"],
+  ["camp","ki","sumi"],
+  ["camp","mori","sumi"],
+  ["sumi","tsuruhashi","daiya"],
+  ["sumi","yougan","daiya"],
+  ["camp","tetsu","kin"],
+  ["sumi","tetsu","kin"],
+  ["mori","tetsu","ita"],
+  ["ita","tsuruhashi","doa"],
+  ["doa","mado","ie"],
+  ["ita","mado","ie"],
+  ["ita","ie","oshiro"],
+  ["ie","yama","oshiro"],
+  ["garasu","ki","mado"],
+  ["garasu","ie","mado"],
+  ["kazan","sakana","yakizakana"],
+  ["ie","yakizakana","gochisou"],
+  ["mado","tetsu","robot"],
+  ["doa","tetsu","robot"],
+  ["tokage","yougan","dragon"],
+  ["kazan","tokage","dragon"],
+  ["gojira","kazan","beam"],
+  ["hi","mecha","beam"],
+  ["dragon","robot","mecha"],
+  ["doubutsu","ken","hero"],
+  ["beam","tsuruhashi","magicpick"],
+  ["ring","tsuruhashi","magicpick"],
+  ["kin","tetsu","ring"],
+  ["doubutsu","ring","sonic"],
+
+  /* --- しぜん・たべもの・いきもの・まち --- */
+  ["yuge","yuge","kumo"],
+  ["kazan","yuge","kumo"],
+  ["yama","yuge","kumo"],
+  ["kumo","mizu","ame"],
+  ["kumo","kumo","ame"],
+  ["kaze","kumo","ame"],
+  ["ame","hi","niji"],
+  ["ame","taiyou","niji"],
+  ["hi","hi","taiyou"],
+  ["hi","kaze","kaji"],
+  ["kumo","hi","kaminari"],
+  ["kumo","tatsumaki","kaminari"],
+  ["mizu","yama","kawa"],
+  ["umi","yama","kawa"],
+  ["ame","yama","kawa"],
+  ["kawa","kawa","umi"],
+  ["ame","tane","kusa"],
+  ["ame","kusa","hana"],
+  ["kusa","taiyou","hana"],
+  ["hana","ki","kudamono"],
+  ["ki","taiyou","kudamono"],
+  ["kudamono","mizu","juice"],
+  ["koori","kudamono","juice"],
+  ["tamago","kudamono","cake"],
+  ["hi","kudamono","cake"],
+  ["koori","juice","ice"],
+  ["juice","yuki","ice"],
+  ["tamago","kaze","tori"],
+  ["kumo","tamago","tori"],
+  ["hana","tamago","mushi"],
+  ["hana","kusa","mushi"],
+  ["sakana","umi","kujira"],
+  ["sakana","sakana","kujira"],
+  ["ishi","tamago","kame"],
+  ["doubutsu","ishi","kame"],
+  ["ita","umi","fune"],
+  ["ita","kawa","fune"],
+  ["ishi","kawa","hashi"],
+  ["kawa","renga","hashi"],
+  ["ie","oshiro","machi"],
+  ["oshiro","oshiro","machi"],
+  ["hashi","ie","machi"],
+  ["ita","kin","takara"],
+  ["doa","kin","takara"],
+  ["daiya","kin","kanmuri"],
+  ["kin","oshiro","kanmuri"],
+  ["doubutsu","kumo","obake"],
+  ["kowareie","kumo","obake"],
+  ["ki","ring","tsue"],
+  ["daiya","ring","tsue"],
+  ["beam","tetsu","uchusen"],
+  ["beam","robot","uchusen"],
+  ["kaminari","tetsu","robot"],
+  ["kaminari","kyouryuu","gojira"],
+  ["mushi","tori","doubutsu"],
+  ["kame","kujira","doubutsu"],
+  ["cake","juice","gochisou"],
+  ["ice","cake","gochisou"],
+  ["hana","niji","hero"],
+  ["tori","tatsumaki","sonic"],
+  ["hi","ie","kaji"], ["kaminari","mori","kaji"],
+  ["ie","kaji","kowareie"], ["mizu","kaji","yuge"]
+];
+
+const WHY = {"mizu|tsuchi": "つちに みずが まざると、どろに なるよ。", "mizu|suna": "すなに みずを かけると、どろに なるね。", "tsuchi|umi": "うみの みずで つちが ぬれて、どろに なるよ。", "suna|umi": "なみが すなを ぬらして、どろに なるよ。", "hi|tsuchi": "つちを つよい ひで やくと、いしみたいに かたく なるよ。", "mizu|yougan": "あつい ようがんは、みずで ひえると かたまって いしに なるよ。", "koori|yougan": "こおりで きゅうに ひえた ようがんは、かたまって いしに なるよ。", "umi|yougan": "ようがんが うみに ながれこむと、ひえて いしに なるよ。", "kaze|tsuchi": "かぜが つちを けずって、こまかい すなに なるよ。", "ishi|umi": "なみが いしを ながい あいだ けずって、すなに なるよ。", "ishi|kaze": "かぜが いしを すこしずつ けずって、すなに なるよ。", "hi|mizu": "みずを ひで あたためると、ゆげが でるよ。", "hi|umi": "うみの みずも あたためると、ゆげに なるよ。", "hi|koori": "こおりは あたためると とけて、みずに なるよ。", "hi|yuki": "ゆきも あたためると とけて、みずに なるよ。", "kaze|yuge": "ゆげは かぜで ひえると、みずの つぶに もどるよ。", "hi|yukiyama": "ゆきやまの ゆきが とけて、みずに なるよ。", "mizu|mizu": "みずが たくさん あつまると、うみに なるよ。", "ishi|ishi": "いしが たくさん つみかさなると、やまみたいに 見えるね。", "ishi|tsuchi": "いしと つちが つもると、やまみたいに たかく なるね。", "kaze|kaze": "かぜが ぐるぐる つよく まわると、たつまきに なるよ。", "yuki|yuki": "ゆきを ぎゅっと おしかためると、こおりに なるよ。", "mizu|yuki": "みずが ゆきで ひえて、こおりに なるよ。", "mizu|yukiyama": "ゆきやまは とても さむいから、みずが こおるよ。", "yama|yuki": "やまに ゆきが つもると、ゆきやまに なるよ。", "koori|yama": "やまが こおりで つつまれて、ゆきやまに なるよ。", "doro|hi": "どろを ひで やくと、かたい レンガに なるよ。", "doro|doro": "どろを かためて ほすと、レンガに なるよ。", "hi|suna": "すなを とても あつい ひで とかすと、ガラスに なるよ。", "suna|yougan": "あつい ようがんが すなを とかして、ガラスに なるよ。", "kazan|suna": "かざんの ねつで すなが とけて、ガラスに なるよ。", "hi|yama": "やまの なかから ひが ふきだすと、かざんに なるよ。", "yama|yougan": "ようがんを ふきだす やまを、かざんと いうよ。", "yougan|yougan": "ようがんが たくさん あつまって、かざんに なるよ。", "ishi|kazan": "かざんの なかで いしが とけて、ようがんに なるよ。", "hi|ishi": "いしを ものすごく つよい ひで とかすと、ようがんに なるよ。", "kazan|kazan": "かざんが ふんかして、ようがんが ながれでるよ。", "mizu|tamago": "みずの なかで たまごが かえって、さかなに なるよ。", "tamago|umi": "うみの たまごから、さかなが うまれるよ。", "sakana|tsuchi": "むかし、さかなの なかまが りくに あがって、とかげの ような いきものに なったと いわれているよ。", "ishi|sakana": "みずから いしの うえに あがった なかまが、とかげの ような いきものに なったと いわれているよ。", "tamago|tsuchi": "つちの なかの たまごから、とかげが うまれるよ。", "tokage|yama": "むかしの とかげの なかまが おおきく なって、きょうりゅうに なったと いわれているよ。", "mori|tokage": "もりに すんでいた とかげの なかまが、きょうりゅうの せんぞだと いわれているよ。", "tokage|tokage": "とかげが うんと おおきく なったら、きょうりゅうみたいだね。", "kyouryuu|yougan": "ようがんの ちからを あびた きょうりゅうが、ゴジラだよ。", "kazan|kyouryuu": "かざんの なかから きょうりゅうが めざめて、ゴジラに なるよ。", "kyouryuu|umi": "うみの そこで ねむっていた きょうりゅうが、ゴジラだよ。", "tane|tsuchi": "つちに たねを まくと、くさが はえるよ。", "doro|tane": "どろに たねが おちて、めが でるよ。", "mizu|tane": "たねに みずを あげると、めが でて くさに なるよ。", "tane|tane": "たねが たくさん あると、くさが いっぱい はえるよ。", "kusa|kusa": "くさが どんどん おおきく そだつと、きみたいに なるね。", "kusa|tsuchi": "よい つちで くさが おおきく なると、きみたいだね。", "kusa|mizu": "みずを たっぷり すった くさは、きみたいに のびるね。", "kusa|tane": "たねから そだった くさが、きみたいに おおきく なるよ。", "ki|ki": "きが たくさん あつまると、もりに なるよ。", "ki|tsuchi": "よい つちで きが ふえて、もりに なるよ。", "ki|yama": "やまに きが いっぱい はえて、もりに なるよ。", "ki|tane": "きの たねが おちて ふえると、もりに なるよ。", "mori|tamago": "もりの たまごから、どうぶつが うまれるよ。", "kusa|tamago": "くさの なかの たまごから、どうぶつが うまれるよ。", "ki|tamago": "きの うえの たまごから、どうぶつが うまれるよ。", "doubutsu|tatsumaki": "たつまきみたいに はやく はしる どうぶつ、それが ソニックだよ。", "kin|sonic": "ソニックが あつめる きんの わっか、それが リングだよ。", "kin|kin": "きんを まるく まげると、リングに なるよ。", "ishi|ki": "きの ぼうに いしを つけると、つるはしに なるよ。", "ishi|ita": "いたを ぼうに して いしを つけると、つるはしに なるよ。", "ki|tetsu": "きの ぼうに てつを つけると、じょうぶな つるはしに なるよ。", "tsuruhashi|yama": "やまを つるはしで ほると、てつが みつかるよ。", "ishi|tsuruhashi": "いしを つるはしで わると、なかから てつが でてくるよ。", "hi|ki": "きを けむりで むしやきに すると、すみに なるよ。", "hi|mori": "もりの きを やいて、すみを つくるよ。", "hi|ita": "いたを やくと、まっくろな すみに なるよ。", "sumi|yama": "すみが やまの そこで ぎゅーっと おされると、ダイヤモンドに なるよ。", "ishi|sumi": "いしの したで すみが おされて、ダイヤモンドに なるよ。", "sumi|sumi": "すみが つよく おしかためられて、ダイヤモンドに なるよ。", "tetsu|yougan": "ようがんの ねつで いわを とかすと、なかから きんが 見つかることが あるよ。", "kazan|tetsu": "かざんの ちかくの いわから、きんが 見つかることが あるよ。", "daiya|tetsu": "てつの けんに ダイヤモンドを つけると、つよい けんに なるよ。", "daiya|ita": "いたの もちてに ダイヤモンドを つけて、けんを つくるよ。", "daiya|ki": "きの もちてに ダイヤモンドを つけて、けんを つくるよ。", "ki|tsuruhashi": "きを つるはしで きると、たいらな いたに なるよ。", "mori|tsuruhashi": "もりの きを きって、いたに するよ。", "ita|ita": "いたを ならべて つなぐと、ドアに なるよ。", "ita|ki": "きと いたを くみあわせて、ドアを つくるよ。", "renga|renga": "レンガを つみあげると、いえが できるよ。", "ita|renga": "レンガの かべに いたの ゆかを つけて、いえに なるよ。", "doa|ita": "いたの かべに ドアを つけると、いえに なるよ。", "doa|renga": "レンガの かべに ドアを つけると、いえに なるよ。", "gojira|ie": "ゴジラが あばれて、いえが こわれちゃった！", "ie|kazan": "かざんが ふんかして、いえが こわれちゃった。", "ie|yougan": "ようがんが ながれてきて、いえが こわれちゃった。", "garasu|ita": "いたの わくに ガラスを はめると、まどに なるよ。", "garasu|tetsu": "てつの わくに ガラスを はめると、まどに なるよ。", "hi|sakana": "さかなを ひで やくと、やきざかなに なるよ。", "sakana|sumi": "すみびで さかなを やくと、おいしい やきざかなに なるよ。", "sakana|yougan": "あつい ようがんの ねつで、さかなが やけるよ。", "hi|tamago": "たまごを ひで やくと、めだまやきに なるよ。", "sumi|tamago": "すみびで たまごを やいて、めだまやきを つくるよ。", "tamago|yougan": "ようがんの ねつで、たまごが やけるよ。", "medama|yakizakana": "やきざかなと めだまやきを ならべたら、ごちそうだね！", "hi|kyouryuu": "ひを はく きょうりゅう、それが ドラゴンだよ。", "hi|tokage": "とかげに つばさと ひが ついたら、ドラゴンの できあがり。", "kazan|tamago": "かざんの なかの たまごから、ドラゴンが うまれると いわれているよ。", "gojira|hi": "ゴジラが くちから だす あつい ひかり、それが ビームだよ。", "gojira|yougan": "ようがんの ちからを ためた ゴジラが、ビームを はなつよ。", "tetsu|tetsu": "てつを たくさん くみたてると、ロボットが できるよ。", "tetsu|tsuruhashi": "つるはしで てつを くみたてて、ロボットを つくるよ。", "gojira|robot": "ゴジラそっくりの ロボット、それが メカゴジラだよ。", "kyouryuu|robot": "きょうりゅうの かたちを した ロボットが、メカゴジラだよ。", "daiya|tsuruhashi": "ダイヤモンドが ひかる つるはしは、なんでも ほれる まほうの どうぐだよ。", "ken|sonic": "けんを もった ソニックは、みんなを まもる ヒーローだ！", "ken|robot": "けんを もった ロボットが、まちを まもる ヒーローに なるよ。", "doubutsu|sakana": "さかなと どうぶつが まざった いきもの、それが にんぎょだよ。", "doubutsu|yuki": "ゆきの なかに すむと いわれる ふしぎな いきもの、それが ゆきおとこだよ。", "doubutsu|yukiyama": "ゆきやまで みかけたと いう うわさの いきもの、それが ゆきおとこだよ。", "ie|ie": "いえを おおきく つよく したのが、おしろだよ。", "ie|renga": "レンガを たくさん つみあげて、おしろを つくるよ。", "hi|sumi": "すみに ひを つけると、キャンプファイヤーに なるよ。", "camp|sakana": "キャンプファイヤーで さかなを やくと、やきざかなに なるよ。", "camp|tamago": "キャンプファイヤーで たまごを やいて、めだまやきを つくるよ。", "tsuchi|yuki": "つちの うえの ゆきが とけて、どろに なるよ。", "tsuchi|tsuchi": "つちが ぎゅっと かたまると、いしに なるよ。", "doro|ishi": "いしと どろが つもって、やまみたいに なるね。", "koori|koori": "こおりが たくさん とけて、うみに なるよ。", "kazan|mizu": "かざんの ねつで みずが あたたまって、ゆげが でるよ。", "umi|yuki": "うみの みずが ゆきで ひえて、こおるよ。", "doro|kazan": "かざんの ねつで どろが やけて、レンガに なるよ。", "doro|sumi": "すみの ひで どろを やいて、レンガを つくるよ。", "sumi|suna": "すみの ひを うんと つよく すれば、すなが とけて ガラスに なるよ。", "camp|suna": "キャンプファイヤーの ねつで すなが とけて、ガラスに なるよ。", "yama|yama": "やまが かさなると、ひを ふく かざんみたいに 見えるね。", "hi|kazan": "かざんの ひが つよく なると、ようがんが ながれでるよ。", "tane|yama": "やまに たねが おちて、くさが はえるよ。", "doro|kusa": "どろの えいようで くさが そだつと、きみたいに なるね。", "kusa|yama": "やまの くさが おおきく そだつと、きみたいだね。", "ki|mizu": "みずを たっぷり すって、きが ふえて もりに なるよ。", "ki|kusa": "きと くさが いっぱいに なって、もりに なるよ。", "tamago|yama": "やまの どこかの たまごから、どうぶつが うまれるのかもね。", "tamago|tamago": "たまごが たくさん かえって、さかなに なるよ。", "suna|tamago": "すなの なかの たまごから、とかげが うまれるよ。", "sakana|yama": "りくに あがった さかなの なかまが、とかげみたいな すがたに なったと いわれているよ。", "ki|tokage": "きの もりで そだった とかげの なかまが、きょうりゅうに なったと いわれているよ。", "tamago|tokage": "とかげの たまごが おおきかったら、きょうりゅうの たまごみたいだね。", "beam|kyouryuu": "ビームの ちからを えた きょうりゅうが、ゴジラだよ。", "kyouryuu|kyouryuu": "きょうりゅうが あつまって、いちばん つよい ゴジラが うまれるよ。", "ita|tetsu": "いたと てつを くみあわせて、つるはしを つくるよ。", "tsuruhashi|tsuruhashi": "つるはしで ほりつづけると、てつが いっぱい とれるよ。", "camp|ki": "キャンプファイヤーで きを やくと、すみに なるよ。", "camp|mori": "もりの きを キャンプファイヤーで やいて、すみを つくるよ。", "sumi|tsuruhashi": "かたまった すみを つるはしで ほりだすと、ダイヤモンドだよ。", "sumi|yougan": "ようがんの ねつと ちからで、すみが ダイヤモンドに なるよ。", "camp|tetsu": "つよい ひで いわを とかすと、きんが とれることが あるよ。", "sumi|tetsu": "すみの つよい ひで いわを とかして、きんを さがすよ。", "mori|tetsu": "もりの きを てつの のこぎりで きって、いたに するよ。", "ita|tsuruhashi": "いたを つるはしで けずって、ドアを つくるよ。", "doa|mado": "ドアと まどを つけたら、いえの できあがり。", "ita|mado": "いたの かべに まどを つけると、いえに なるよ。", "ie|ita": "いえを いたで おおきく ひろげて、おしろに するよ。", "ie|yama": "やまの うえに たてた おおきな いえが、おしろだよ。", "garasu|ki": "きの わくに ガラスを はめると、まどに なるよ。", "garasu|ie": "いえの かべに ガラスを はめこむと、まどに なるよ。", "kazan|sakana": "かざんの ねつで さかなが やけるよ。", "ie|yakizakana": "いえで やきざかなを ならべたら、ごちそうだね！", "mado|tetsu": "てつの からだに まどの めを つけたら、ロボットだ！", "doa|tetsu": "てつと ドアを くみたてて、うごく ロボットを つくるよ。", "tokage|yougan": "ようがんの なかで そだった とかげが、ドラゴンに なるよ。", "kazan|tokage": "かざんに すむ とかげ、それが ドラゴンだよ。", "gojira|kazan": "かざんの ねつを すった ゴジラが、ビームを はなつよ。", "hi|mecha": "メカゴジラも、くちから ビームを はなつよ。", "dragon|robot": "ドラゴンの かたちの ロボット、それが メカゴジラだよ。", "doubutsu|ken": "けんを もった どうぶつが、みんなを まもる ヒーローに なるよ。", "beam|tsuruhashi": "ビームの ちからが やどった つるはしは、まほうの どうぐだよ。", "ring|tsuruhashi": "リングの ちからで、つるはしが まほうの どうぐに なるよ。", "kin|tetsu": "てつと きんで、まるい リングを つくるよ。", "doubutsu|ring": "リングを あつめる はやい どうぶつ、それが ソニックだよ。", "yuge|yuge": "ゆげが そらに あがって、くもに なるよ。", "kazan|yuge": "かざんの ゆげが そらで ひえて、くもに なるよ。", "yama|yuge": "やまの うえに ゆげが たまって、くもに なるよ。", "kumo|mizu": "くもに みずが たまると、あめが ふるよ。", "kumo|kumo": "くもが おおきく なると、あめに なるよ。", "kaze|kumo": "かぜに おされた くもから、あめが ふるよ。", "ame|hi": "あめの あとに ひが さすと、にじが でるよ。", "ame|taiyou": "あめと たいようが そろうと、にじが かかるよ。", "hi|hi": "たいようは、おおきな ひの たまみたいに 見えるね。", "hi|kaze": "ひが かぜに あおられて ひろがると、かじに なるよ。", "hi|kumo": "くもの なかで ひかりが はじけて、かみなりに なるよ。", "kumo|tatsumaki": "たつまきの くもから、かみなりが おちるよ。", "mizu|yama": "やまから みずが ながれて、かわに なるよ。", "umi|yama": "やまの みずが うみへ ながれる みちが、かわだよ。", "ame|yama": "やまに ふった あめが あつまって、かわに なるよ。", "kawa|kawa": "かわが たくさん あつまって、うみに なるよ。", "ame|tane": "たねに あめが ふって、めが でるよ。", "ame|kusa": "くさに あめが ふって、はなが さくよ。", "kusa|taiyou": "たいようを あびた くさに、はなが さくよ。", "hana|ki": "きの はなが おちたあとに、くだものが なるよ。", "ki|taiyou": "たいようを あびた きに、くだものが みのるよ。", "kudamono|mizu": "くだものを しぼって みずと まぜると、ジュースに なるよ。", "koori|kudamono": "くだものを こおりで ひやすと、つめたい ジュースに なるよ。", "kudamono|tamago": "たまごと くだものを つかって、ケーキを つくるよ。", "hi|kudamono": "くだものを いれた きじを やくと、ケーキに なるよ。", "juice|koori": "ジュースを こおらせると、アイスに なるよ。", "juice|yuki": "ゆきで ジュースを ひやして、アイスを つくるよ。", "kaze|tamago": "たまごから かえって そらを とぶ いきもの、それが とりだよ。", "kumo|tamago": "とりは くもの うえまで とんでいけるように 見えるね。", "hana|tamago": "はなの ちかくの たまごから、むしが うまれるよ。", "hana|kusa": "はなと くさの あいだに、むしが すんでいるよ。", "sakana|umi": "うみを およぐ くじらは さかなに にているけど、いきを すう どうぶつだよ。", "sakana|sakana": "くじらは さかなみたいに 見えるけど、ほんとうは どうぶつの なかまだよ。", "ishi|tamago": "いしみたいな こうらを もった いきもの、それが かめだよ。", "doubutsu|ishi": "かたい こうらを せおった どうぶつが、かめだよ。", "ita|umi": "いたを くみあわせると、うみに うかぶ ふねに なるよ。", "ita|kawa": "かわを わたる ために、いたで ふねを つくるよ。", "ishi|kawa": "かわに いしを ならべると、はしに なるよ。", "kawa|renga": "レンガで かわを またぐ はしを つくるよ。", "ie|oshiro": "いえと おしろが あつまって、まちに なるよ。", "oshiro|oshiro": "おしろが いくつも ならぶと、おおきな まちに なるよ。", "hashi|ie": "いえと はしが つながって、まちが できるよ。", "ita|kin": "いたの はこに きんを いれたら、たからばこだ！", "doa|kin": "かぎの かかる はこに きんを しまうと、たからばこに なるよ。", "daiya|kin": "きんに ダイヤモンドを かざると、かんむりに なるよ。", "kin|oshiro": "おしろの おうさまが かぶるのが、かんむりだよ。", "doubutsu|kumo": "くもみたいに ふわふわ うかぶ ふしぎな もの、それが おばけだよ。", "kowareie|kumo": "こわれた いえに でると いわれるのが、おばけだよ。", "ki|ring": "きの ぼうに リングを つけると、まほうの つえに なるよ。", "daiya|ring": "リングと ダイヤモンドの ちからで、まほうの つえが できるよ。", "beam|tetsu": "てつの からだに ビームを つけて、そらへ とぶ ふねを つくるよ。", "beam|robot": "ロボットが ビームで とびたつ、それが うちゅうせんだよ。", "kaminari|tetsu": "かみなりの ちからで てつが うごきだして、ロボットに なるよ。", "kaminari|kyouryuu": "かみなりに うたれた きょうりゅうが、ゴジラに なるよ。", "mushi|tori": "むしや とりも、どうぶつの なかまだよ。", "kame|kujira": "かめや くじらも、どうぶつの なかまだよ。", "cake|juice": "ケーキと ジュースが そろったら、ごちそうだね！", "cake|ice": "アイスと ケーキを ならべたら、ごちそうだ！", "hana|niji": "にじと はなに かこまれて、ヒーローが とうじょうするよ。", "tatsumaki|tori": "たつまきより はやく とぶ、それくらい はやいのが ソニックだよ。", "hi|ie": "いえに ひが うつると、かじに なって しまうよ。", "kaminari|mori": "かみなりが もりに おちて、かじに なることが あるよ。", "ie|kaji": "かじで いえが やけて しまったよ。", "kaji|mizu": "かじに みずを かけると、ゆげが たちのぼるよ。"};
+
+
+/* ゲームや えいがの せかいの はなし（じっさいには おきないこと） */
+const FICTION = new Set([
+  "kyouryuu|yougan","kazan|kyouryuu","kyouryuu|umi",
+  "doubutsu|tatsumaki","kin|sonic",
+  "daiya|tetsu","daiya|ita","daiya|ki",
+  "gojira|ie",
+  "hi|kyouryuu","hi|tokage","kazan|tamago","gojira|hi","gojira|yougan","tetsu|tetsu","tetsu|tsuruhashi","gojira|robot","kyouryuu|robot","daiya|tsuruhashi","ken|sonic","ken|robot","doubutsu|sakana","doubutsu|yuki","doubutsu|yukiyama",
+  "beam|kyouryuu","kyouryuu|kyouryuu","mado|tetsu","doa|tetsu","tokage|yougan","kazan|tokage","gojira|kazan","hi|mecha","dragon|robot","doubutsu|ken","beam|tsuruhashi","ring|tsuruhashi","kin|tetsu","doubutsu|ring",
+  "doubutsu|kumo","kowareie|kumo","ki|ring","daiya|ring","beam|tetsu","beam|robot","kaminari|tetsu","kaminari|kyouryuu","hana|niji","tatsumaki|tori"
+]);
+const FICTION_ITEMS = new Set([
+  "gojira","sonic","ring","dragon","beam","mecha","magicpick","hero","ningyo","yukiotoko","obake","tsue","uchusen"
+]);
+const LIKENESS = new Set(["hi|hi","hi|tsuchi","ishi|ishi","ishi|tsuchi","doro|ishi","yama|yama","kusa|kusa","kusa|tsuchi","kusa|mizu","kusa|tane","doro|kusa","kusa|yama","tokage|tokage","tamago|tokage","sakana|sakana","sakana|umi","tamago|yama","kumo|tamago"]);
+const LIKE_NOTE = "ほんとうは ちがうけど、にているね。";
+const LIKE_NOTE_VOICE = "本当は違うけど、似ているね。";
+const TALK_NOTE = "あなたは どう思う？ おうちの人と 話してみよう！";
+const TALK_NOTE_VOICE = "あなたはどう思う？おうちの人と話してみよう。";
+
+
+/* 読み上げ専用テキスト：文は漢字まじりのほうが区切りを正しく判断でき、抑揚が自然になる */
+const WHY_VOICE = {"mizu|tsuchi": "土に水が混ざると、泥になるよ。", "mizu|suna": "砂に水をかけると、泥になるね。", "tsuchi|umi": "海の水で土が濡れて、泥になるよ。", "suna|umi": "波が砂を濡らして、泥になるよ。", "hi|tsuchi": "土を強い火で焼くと、石みたいに硬くなるよ。", "mizu|yougan": "熱い溶岩は、水で冷えると固まって石になるよ。", "koori|yougan": "氷で急に冷えた溶岩は、固まって石になるよ。", "umi|yougan": "溶岩が海に流れ込むと、冷えて石になるよ。", "kaze|tsuchi": "風が土を削って、細かい砂になるよ。", "ishi|umi": "波が石を長い間削って、砂になるよ。", "ishi|kaze": "風が石を少しずつ削って、砂になるよ。", "hi|mizu": "水を火で温めると、湯気が出るよ。", "hi|umi": "海の水も温めると、湯気になるよ。", "hi|koori": "氷は温めると溶けて、水になるよ。", "hi|yuki": "雪も温めると溶けて、水になるよ。", "kaze|yuge": "湯気は風で冷えると、水の粒に戻るよ。", "hi|yukiyama": "雪山の雪が溶けて、水になるよ。", "mizu|mizu": "水がたくさん集まると、海になるよ。", "ishi|ishi": "石がたくさん積み重なると、山みたいに見えるね。", "ishi|tsuchi": "石と土が積もると、山みたいに高くなるね。", "kaze|kaze": "風がぐるぐる強く回ると、竜巻になるよ。", "yuki|yuki": "雪をぎゅっと押し固めると、氷になるよ。", "mizu|yuki": "水が雪で冷えて、氷になるよ。", "mizu|yukiyama": "雪山はとても寒いから、水が凍るよ。", "yama|yuki": "山に雪が積もると、雪山になるよ。", "koori|yama": "山が氷で包まれて、雪山になるよ。", "doro|hi": "泥を火で焼くと、硬いレンガになるよ。", "doro|doro": "泥を固めて干すと、レンガになるよ。", "hi|suna": "砂をとても熱い火で溶かすと、ガラスになるよ。", "suna|yougan": "熱い溶岩が砂を溶かして、ガラスになるよ。", "kazan|suna": "火山の熱で砂が溶けて、ガラスになるよ。", "hi|yama": "山の中から火が噴き出すと、火山になるよ。", "yama|yougan": "溶岩を噴き出す山を、火山と言うよ。", "yougan|yougan": "溶岩がたくさん集まって、火山になるよ。", "ishi|kazan": "火山の中で石が溶けて、溶岩になるよ。", "hi|ishi": "石をものすごく強い火で溶かすと、溶岩になるよ。", "kazan|kazan": "火山が噴火して、溶岩が流れ出るよ。", "mizu|tamago": "水の中で卵がかえって、魚になるよ。", "tamago|umi": "海の卵から、魚が生まれるよ。", "sakana|tsuchi": "昔、魚の仲間が陸に上がって、トカゲのような生き物になったと言われているよ。", "ishi|sakana": "水から石の上に上がった仲間が、トカゲのような生き物になったと言われているよ。", "tamago|tsuchi": "土の中の卵から、トカゲが生まれるよ。", "tokage|yama": "昔のトカゲの仲間が大きくなって、恐竜になったと言われているよ。", "mori|tokage": "森に住んでいたトカゲの仲間が、恐竜の先祖だと言われているよ。", "tokage|tokage": "トカゲがうんと大きくなったら、恐竜みたいだね。", "kyouryuu|yougan": "溶岩の力を浴びた恐竜が、ゴジラだよ。", "kazan|kyouryuu": "火山の中から恐竜が目覚めて、ゴジラになるよ。", "kyouryuu|umi": "海の底で眠っていた恐竜が、ゴジラだよ。", "tane|tsuchi": "土に種をまくと、草が生えるよ。", "doro|tane": "泥に種が落ちて、芽が出るよ。", "mizu|tane": "種に水をあげると、芽が出て草になるよ。", "tane|tane": "種がたくさんあると、草がいっぱい生えるよ。", "kusa|kusa": "草がどんどん大きく育つと、木みたいになるね。", "kusa|tsuchi": "良い土で草が大きくなると、木みたいだね。", "kusa|mizu": "水をたっぷり吸った草は、木みたいに伸びるね。", "kusa|tane": "種から育った草が、木みたいに大きくなるよ。", "ki|ki": "木がたくさん集まると、森になるよ。", "ki|tsuchi": "良い土で木が増えて、森になるよ。", "ki|yama": "山に木がいっぱい生えて、森になるよ。", "ki|tane": "木の種が落ちて増えると、森になるよ。", "mori|tamago": "森の卵から、動物が生まれるよ。", "kusa|tamago": "草の中の卵から、動物が生まれるよ。", "ki|tamago": "木の上の卵から、動物が生まれるよ。", "doubutsu|tatsumaki": "竜巻みたいに速く走る動物、それがソニックだよ。", "kin|sonic": "ソニックが集めるきんの輪っか、それがリングだよ。", "kin|kin": "きんを丸く曲げると、リングになるよ。", "ishi|ki": "木の棒に石を付けると、ツルハシになるよ。", "ishi|ita": "板を棒にして石を付けると、ツルハシになるよ。", "ki|tetsu": "木の棒に鉄を付けると、丈夫なツルハシになるよ。", "tsuruhashi|yama": "山をツルハシで掘ると、鉄が見つかるよ。", "ishi|tsuruhashi": "石をツルハシで割ると、中から鉄が出てくるよ。", "hi|ki": "木を煙で蒸し焼きにすると、炭になるよ。", "hi|mori": "森の木を焼いて、炭を作るよ。", "hi|ita": "板を焼くと、真っ黒な炭になるよ。", "sumi|yama": "炭が山の底でぎゅーっと押されると、ダイヤモンドになるよ。", "ishi|sumi": "石の下で炭が押されて、ダイヤモンドになるよ。", "sumi|sumi": "炭が強く押し固められて、ダイヤモンドになるよ。", "tetsu|yougan": "溶岩の熱で岩を溶かすと、中からきんが見つかることがあるよ。", "kazan|tetsu": "火山の近くの岩から、きんが見つかることがあるよ。", "daiya|tetsu": "鉄のけんにダイヤモンドを付けると、強いけんになるよ。", "daiya|ita": "板の持ち手にダイヤモンドを付けて、けんを作るよ。", "daiya|ki": "木の持ち手にダイヤモンドを付けて、けんを作るよ。", "ki|tsuruhashi": "木をツルハシで切ると、平らな板になるよ。", "mori|tsuruhashi": "森の木を切って、板にするよ。", "ita|ita": "板を並べてつなぐと、ドアになるよ。", "ita|ki": "木と板を組み合わせて、ドアを作るよ。", "renga|renga": "レンガを積み上げると、家ができるよ。", "ita|renga": "レンガの壁に板の床を付けて、家になるよ。", "doa|ita": "板の壁にドアを付けると、家になるよ。", "doa|renga": "レンガの壁にドアを付けると、家になるよ。", "gojira|ie": "ゴジラが暴れて、家が壊れちゃった！", "ie|kazan": "火山が噴火して、家が壊れちゃった。", "ie|yougan": "溶岩が流れてきて、家が壊れちゃった。", "garasu|ita": "板の枠にガラスをはめると、窓になるよ。", "garasu|tetsu": "鉄の枠にガラスをはめると、窓になるよ。", "hi|sakana": "魚を火で焼くと、焼き魚になるよ。", "sakana|sumi": "炭火で魚を焼くと、おいしい焼き魚になるよ。", "sakana|yougan": "熱い溶岩の熱で、魚が焼けるよ。", "hi|tamago": "卵を火で焼くと、目玉焼きになるよ。", "sumi|tamago": "炭火で卵を焼いて、目玉焼きを作るよ。", "tamago|yougan": "溶岩の熱で、卵が焼けるよ。", "medama|yakizakana": "焼き魚と目玉焼きを並べたら、ごちそうだね！", "hi|kyouryuu": "火を吐く恐竜、それがドラゴンだよ。", "hi|tokage": "トカゲに翼と火がついたら、ドラゴンの出来上がり。", "kazan|tamago": "火山の中の卵から、ドラゴンが生まれると言われているよ。", "gojira|hi": "ゴジラが口から出す熱い光、それがビームだよ。", "gojira|yougan": "溶岩の力をためたゴジラが、ビームを放つよ。", "tetsu|tetsu": "鉄をたくさん組み立てると、ロボットができるよ。", "tetsu|tsuruhashi": "ツルハシで鉄を組み立てて、ロボットを作るよ。", "gojira|robot": "ゴジラそっくりのロボット、それがメカゴジラだよ。", "kyouryuu|robot": "恐竜の形をしたロボットが、メカゴジラだよ。", "daiya|tsuruhashi": "ダイヤモンドが光るツルハシは、何でも掘れる魔法の道具だよ。", "ken|sonic": "けんを持ったソニックは、みんなを守るヒーローだ！", "ken|robot": "けんを持ったロボットが、町を守るヒーローになるよ。", "doubutsu|sakana": "魚と動物が混ざった生き物、それが人魚だよ。", "doubutsu|yuki": "雪の中に住むと言われる不思議な生き物、それが雪男だよ。", "doubutsu|yukiyama": "雪山で見かけたという噂の生き物、それが雪男だよ。", "ie|ie": "家を大きく強くしたのが、お城だよ。", "ie|renga": "レンガをたくさん積み上げて、お城を作るよ。", "hi|sumi": "炭に火をつけると、キャンプファイヤーになるよ。", "camp|sakana": "キャンプファイヤーで魚を焼くと、焼き魚になるよ。", "camp|tamago": "キャンプファイヤーで卵を焼いて、目玉焼きを作るよ。", "tsuchi|yuki": "土の上の雪が溶けて、泥になるよ。", "tsuchi|tsuchi": "土がぎゅっと固まると、石になるよ。", "doro|ishi": "石と泥が積もって、山みたいになるね。", "koori|koori": "氷がたくさん溶けて、海になるよ。", "kazan|mizu": "火山の熱で水が温まって、湯気が出るよ。", "umi|yuki": "海の水が雪で冷えて、凍るよ。", "doro|kazan": "火山の熱で泥が焼けて、レンガになるよ。", "doro|sumi": "炭の火で泥を焼いて、レンガを作るよ。", "sumi|suna": "炭の火をうんと強くすれば、砂が溶けてガラスになるよ。", "camp|suna": "キャンプファイヤーの熱で砂が溶けて、ガラスになるよ。", "yama|yama": "山が重なると、火を吹く火山みたいに見えるね。", "hi|kazan": "火山の火が強くなると、溶岩が流れ出るよ。", "tane|yama": "山に種が落ちて、草が生えるよ。", "doro|kusa": "泥の栄養で草が育つと、木みたいになるね。", "kusa|yama": "山の草が大きく育つと、木みたいだね。", "ki|mizu": "水をたっぷり吸って、木が増えて森になるよ。", "ki|kusa": "木と草がいっぱいになって、森になるよ。", "tamago|yama": "山のどこかの卵から、動物が生まれるのかもね。", "tamago|tamago": "卵がたくさんかえって、魚になるよ。", "suna|tamago": "砂の中の卵から、トカゲが生まれるよ。", "sakana|yama": "陸に上がった魚の仲間が、トカゲみたいな姿になったと言われているよ。", "ki|tokage": "木の森で育ったトカゲの仲間が、恐竜になったと言われているよ。", "tamago|tokage": "トカゲの卵が大きかったら、恐竜の卵みたいだね。", "beam|kyouryuu": "ビームの力を得た恐竜が、ゴジラだよ。", "kyouryuu|kyouryuu": "恐竜が集まって、一番強いゴジラが生まれるよ。", "ita|tetsu": "板と鉄を組み合わせて、ツルハシを作るよ。", "tsuruhashi|tsuruhashi": "ツルハシで掘り続けると、鉄がいっぱい取れるよ。", "camp|ki": "キャンプファイヤーで木を焼くと、炭になるよ。", "camp|mori": "森の木をキャンプファイヤーで焼いて、炭を作るよ。", "sumi|tsuruhashi": "固まった炭をツルハシで掘り出すと、ダイヤモンドだよ。", "sumi|yougan": "溶岩の熱と力で、炭がダイヤモンドになるよ。", "camp|tetsu": "強い火で岩を溶かすと、きんが取れることがあるよ。", "sumi|tetsu": "炭の強い火で岩を溶かして、きんを探すよ。", "mori|tetsu": "森の木を鉄のノコギリで切って、板にするよ。", "ita|tsuruhashi": "板をツルハシで削って、ドアを作るよ。", "doa|mado": "ドアと窓を付けたら、家の出来上がり。", "ita|mado": "板の壁に窓を付けると、家になるよ。", "ie|ita": "家を板で大きく広げて、お城にするよ。", "ie|yama": "山の上に建てた大きな家が、お城だよ。", "garasu|ki": "木の枠にガラスをはめると、窓になるよ。", "garasu|ie": "家の壁にガラスをはめ込むと、窓になるよ。", "kazan|sakana": "火山の熱で魚が焼けるよ。", "ie|yakizakana": "家で焼き魚を並べたら、ごちそうだね！", "mado|tetsu": "鉄の体に窓の目を付けたら、ロボットだ！", "doa|tetsu": "鉄とドアを組み立てて、動くロボットを作るよ。", "tokage|yougan": "溶岩の中で育ったトカゲが、ドラゴンになるよ。", "kazan|tokage": "火山に住むトカゲ、それがドラゴンだよ。", "gojira|kazan": "火山の熱を吸ったゴジラが、ビームを放つよ。", "hi|mecha": "メカゴジラも、口からビームを放つよ。", "dragon|robot": "ドラゴンの形のロボット、それがメカゴジラだよ。", "doubutsu|ken": "けんを持った動物が、みんなを守るヒーローになるよ。", "beam|tsuruhashi": "ビームの力が宿ったツルハシは、魔法の道具だよ。", "ring|tsuruhashi": "リングの力で、ツルハシが魔法の道具になるよ。", "kin|tetsu": "鉄ときんで、丸いリングを作るよ。", "doubutsu|ring": "リングを集める速い動物、それがソニックだよ。", "yuge|yuge": "湯気が空に上がって、雲になるよ。", "kazan|yuge": "火山の湯気が空で冷えて、雲になるよ。", "yama|yuge": "山の上に湯気がたまって、雲になるよ。", "kumo|mizu": "雲に水がたまると、雨が降るよ。", "kumo|kumo": "雲が大きくなると、雨になるよ。", "kaze|kumo": "風に押された雲から、雨が降るよ。", "ame|hi": "雨の後に日が差すと、虹が出るよ。", "ame|taiyou": "雨と太陽がそろうと、虹がかかるよ。", "hi|hi": "太陽は、大きな火の玉みたいに見えるね。", "hi|kaze": "火が風にあおられて広がると、火事になるよ。", "hi|kumo": "雲の中で光がはじけて、かみなりになるよ。", "kumo|tatsumaki": "竜巻の雲から、かみなりが落ちるよ。", "mizu|yama": "山から水が流れて、川になるよ。", "umi|yama": "山の水が海へ流れる道が、川だよ。", "ame|yama": "山に降った雨が集まって、川になるよ。", "kawa|kawa": "川がたくさん集まって、海になるよ。", "ame|tane": "種に雨が降って、芽が出るよ。", "ame|kusa": "草に雨が降って、花が咲くよ。", "kusa|taiyou": "太陽を浴びた草に、花が咲くよ。", "hana|ki": "木の花が落ちた後に、果物がなるよ。", "ki|taiyou": "太陽を浴びた木に、果物が実るよ。", "kudamono|mizu": "果物をしぼって水と混ぜると、ジュースになるよ。", "koori|kudamono": "果物を氷で冷やすと、冷たいジュースになるよ。", "kudamono|tamago": "卵と果物を使って、ケーキを作るよ。", "hi|kudamono": "果物を入れた生地を焼くと、ケーキになるよ。", "juice|koori": "ジュースを凍らせると、アイスになるよ。", "juice|yuki": "雪でジュースを冷やして、アイスを作るよ。", "kaze|tamago": "卵からかえって空を飛ぶ生き物、それが鳥だよ。", "kumo|tamago": "鳥は雲の上まで飛んでいけるように見えるね。", "hana|tamago": "花の近くの卵から、虫が生まれるよ。", "hana|kusa": "花と草の間に、虫が住んでいるよ。", "sakana|umi": "海を泳ぐクジラは魚に似ているけど、息を吸う動物だよ。", "sakana|sakana": "クジラは魚みたいに見えるけど、本当は動物の仲間だよ。", "ishi|tamago": "石みたいな甲羅を持った生き物、それがカメだよ。", "doubutsu|ishi": "硬い甲羅を背負った動物が、カメだよ。", "ita|umi": "板を組み合わせると、海に浮かぶ船になるよ。", "ita|kawa": "川を渡るために、板で船を作るよ。", "ishi|kawa": "川に石を並べると、橋になるよ。", "kawa|renga": "レンガで川をまたぐ橋を作るよ。", "ie|oshiro": "家とお城が集まって、町になるよ。", "oshiro|oshiro": "お城がいくつも並ぶと、大きな町になるよ。", "hashi|ie": "家と橋がつながって、町ができるよ。", "ita|kin": "板の箱にきんを入れたら、宝箱だ！", "doa|kin": "鍵のかかる箱にきんをしまうと、宝箱になるよ。", "daiya|kin": "きんにダイヤモンドを飾ると、かんむりになるよ。", "kin|oshiro": "お城の王様がかぶるのが、かんむりだよ。", "doubutsu|kumo": "雲みたいにふわふわ浮かぶ不思議なもの、それがおばけだよ。", "kowareie|kumo": "壊れた家に出ると言われるのが、おばけだよ。", "ki|ring": "木の棒にリングを付けると、魔法のつえになるよ。", "daiya|ring": "リングとダイヤモンドの力で、魔法のつえができるよ。", "beam|tetsu": "鉄の体にビームを付けて、空へ飛ぶ船を作るよ。", "beam|robot": "ロボットがビームで飛び立つ、それが宇宙船だよ。", "kaminari|tetsu": "かみなりの力で鉄が動き出して、ロボットになるよ。", "kaminari|kyouryuu": "かみなりに打たれた恐竜が、ゴジラになるよ。", "mushi|tori": "虫や鳥も、動物の仲間だよ。", "kame|kujira": "カメやクジラも、動物の仲間だよ。", "cake|juice": "ケーキとジュースがそろったら、ごちそうだね！", "cake|ice": "アイスとケーキを並べたら、ごちそうだ！", "hana|niji": "虹と花に囲まれて、ヒーローが登場するよ。", "tatsumaki|tori": "竜巻より速く飛ぶ、それくらい速いのがソニックだよ。", "hi|ie": "家に火が移ると、火事になってしまうよ。", "kaminari|mori": "かみなりが森に落ちて、火事になることがあるよ。", "ie|kaji": "火事で家が焼けてしまったよ。", "kaji|mizu": "火事に水をかけると、湯気が立ち上るよ。"};
+
+const recipeMap = {};
+RECIPES.forEach(([a,b,r])=>{ recipeMap[[a,b].sort().join("|")] = r; });
+
+/* ---------- state ---------- */
+const KEY = "blocklab";   /* ← このキーは今後 変更しない */
+const PKEY = "blocklab_photos";
+const OLD_KEYS = ["blocklab_v15","blocklab_v14","blocklab_v13","blocklab_v12","blocklab_v11",
+  "blocklab_v10","blocklab_v9","blocklab_v8","blocklab_v7","blocklab_v6","blocklab_v5",
+  "blocklab_v4","blocklab_v3","blocklab_v2","blocklab_v1"];
+let found = [...BASE];
+let opts = {speak:true, breaks:true, keySound:true, glow:true, read:{}, custom:{}};
+let session = 0;
+let slots = [null,null];
+let lastKey = null;
+let whyLog = [];
+let customItems = {};   /* id -> {n,s,k,e}  親が みとめた あたらしい アイテム */
+let customRecipes = []; /* {a,b,id,why}                                     */
+let proposals = [];     /* {a,b,name,why,t}  こどもの ていあん（みとめる まえ） */
+let failPair = null;
+let migrated = null;
+let doubts = [];          /* {k, note, t} こどもが「ちがうかも」と おもった レシピ */
+let classOverride = {};
+let recipeEdits = {};
+let photos = {};   /* id -> データURL（べつ保存：バックアップ文字列が巨大にならないように） */   /* key -> {r, why, voice, cls} おとなが なおした レシピ */   /* key -> "real" | "lik" | "fic"  おとなが つけなおした ぶんるい */
+let apMode = "appeal";
+const MINE_ITEMS = new Set();
+
+function applyData(d){
+  if(!d) return false;
+  if(Array.isArray(d.found) && d.found.length) found = d.found;
+  if(d.opts) opts = Object.assign(opts, d.opts);
+  if(!opts.read) opts.read = {};
+  if(!opts.custom) opts.custom = {};
+  if(Array.isArray(d.whyLog)) whyLog = d.whyLog;
+  if(d.customItems) customItems = d.customItems;
+  if(Array.isArray(d.customRecipes)) customRecipes = d.customRecipes;
+  if(Array.isArray(d.proposals)) proposals = d.proposals;
+  if(Array.isArray(d.doubts)) doubts = d.doubts;
+  if(d.classOverride) classOverride = d.classOverride;
+  return true;
+}
+
+function loadPhotos(){
+  try{ const r = localStorage.getItem(PKEY); if(r) photos = JSON.parse(r); }catch(e){}
+}
+function savePhotos(){
+  try{ localStorage.setItem(PKEY, JSON.stringify(photos)); return true; }
+  catch(e){ toast("ほぞんできません（ようりょう オーバー）"); return false; }
+}
+
+function load(){
+  try{
+    const raw = localStorage.getItem(KEY);
+    if(raw){ applyData(JSON.parse(raw)); return; }
+    /* 以前のバージョンで ほぞんした データを ひきつぐ */
+    for(const k of OLD_KEYS){
+      const old = localStorage.getItem(k);
+      if(old){
+        applyData(JSON.parse(old));
+        try{ localStorage.setItem(KEY, old); }catch(e){}
+        migrated = k;
+        return;
+      }
+    }
+  }catch(e){ /* 保存が使えない環境でも遊べるようにそのまま続行 */ }
+}
+
+function save(){
+  try{ localStorage.setItem(KEY, JSON.stringify({found, opts, whyLog, customItems, customRecipes, proposals, doubts, classOverride, recipeEdits})); }catch(e){}
+}
+
+function allRecipes(){
+  const base = RECIPES.concat(customRecipes.map(r=>[r.a, r.b, r.id]));
+  return base.map(([a,b,r])=>{
+    const e = recipeEdits[[a,b].sort().join("|")];
+    return e ? [a,b,e.r] : [a,b,r];
+  });
+}
+function mergeCustom(){
+  Object.keys(customItems).forEach(id=>{
+    ITEMS[id] = customItems[id];
+    MINE_ITEMS.add(id);
+  });
+  Object.keys(recipeEdits).forEach(k=>{
+    const e = recipeEdits[k];
+    if(e.newItem && !ITEMS[e.r]){ ITEMS[e.r] = e.newItem; MINE_ITEMS.add(e.r); }
+    recipeMap[k] = e.r;
+    if(e.why)   WHY[k] = e.why;
+    if(e.voice) WHY_VOICE[k] = e.voice;
+    else if(e.why) WHY_VOICE[k] = e.why.replace(/ /g,"");
+    classOverride[k] = e.cls || "real";
+  });
+  customRecipes.forEach(r=>{
+    const k = [r.a, r.b].sort().join("|");
+    recipeMap[k] = r.id;
+    WHY[k] = r.why;
+    WHY_VOICE[k] = r.voice || r.why.replace(/ /g, "");
+    if(r.cls && r.cls !== "real" && !classOverride[k]) classOverride[k] = r.cls;
+  });
+}
+
+/* ---------- speech ---------- */
+let voice = null;
+function pickVoice(){
+  const vs = speechSynthesis.getVoices();
+  voice = vs.find(v=>v.lang==="ja-JP") || vs.find(v=>v.lang&&v.lang.startsWith("ja")) || null;
+}
+if("speechSynthesis" in window){
+  pickVoice();
+  speechSynthesis.onvoiceschanged = pickVoice;
+}
+function say(text, rate){
+  if(!opts.speak || !("speechSynthesis" in window)) return;
+  try{
+    speechSynthesis.cancel();
+    const u = new SpeechSynthesisUtterance(text);
+    u.lang = "ja-JP"; u.rate = rate || 0.85; u.pitch = 1.05;
+    if(voice) u.voice = voice;
+    speechSynthesis.speak(u);
+  }catch(e){}
+}
+
+function liveItems(){
+  const set = new Set();
+  allRecipes().forEach(([a,b,r])=>{
+    if(found.includes(a) && found.includes(b) && !found.includes(r)){ set.add(a); set.add(b); }
+  });
+  return set;
+}
+
+function itemClass(id){
+  if(MINE_ITEMS.has(id)) return "mine";
+  if(FICTION_ITEMS.has(id)) return "fic";
+  return "";
+}
+
+function itemVoice(id){
+  const it = ITEMS[id];
+  const c = opts.custom && opts.custom[id];
+  if(c && c.trim()) return c.trim();
+  return opts.read[id] === "h" ? it.s : (it.k || it.s);
+}
+function sayItem(id){ say(itemVoice(id)); }
+
+
+/* ===== あいうえお順の ならびかえ ===== */
+function kanaKey(str){
+  return (str || "").replace(/[\u30A1-\u30F6]/g, c => String.fromCharCode(c.charCodeAt(0) - 0x60))
+                    .replace(/[ー・\s]/g, "");
+}
+const GYO = [
+  ["あ","あいうえおぁぃぅぇぉ"], ["か","かきくけこがぎぐげご"], ["さ","さしすせそざじずぜぞ"],
+  ["た","たちつてとだぢづでどっ"], ["な","なにぬねの"], ["は","はひふへほばびぶべぼぱぴぷぺぽ"],
+  ["ま","まみむめも"], ["や","やゆよゃゅょ"], ["ら","らりるれろ"], ["わ","わをんゎ"]
+];
+function gyoOf(name){
+  const c = kanaKey(name).charAt(0);
+  for(const [g, set] of GYO) if(set.indexOf(c) >= 0) return g;
+  return "そのほか";
+}
+function byKana(a, b){ return kanaKey(a).localeCompare(kanaKey(b), "ja"); }
+
+/* ---------- render helpers ---------- */
+const $ = id => document.getElementById(id);
+function iconHTML(e){ return e; }
+function hasIcon(id){ return !!(photos[id] || ITEMS[id].e); }
+function iconOf(id, cls){
+  if(photos[id]) return '<img class="ph ' + (cls||"") + '" src="' + photos[id] + '" alt="">';
+  return ITEMS[id].e;
+}
+
+function renderGoals(){
+  $("goals").innerHTML = GOALS.map(id=>{
+    const it = ITEMS[id];
+    const got = found.includes(id);
+    return `<div class="goal ${got?"found":""}">
+      <div class="g-emoji">${got?(hasIcon(id)?iconOf(id):"　"):"❓"}</div>
+      <div class="g-name">${got?it.n:"？？？"}</div>
+    </div>`;
+  }).join("");
+}
+
+function renderGrid(freshId){
+  const live = opts.glow === false ? new Set() : liveItems();
+  $("grid").innerHTML = found.map(id=>{
+    const it = ITEMS[id];
+    const sel = slots.includes(id) ? "sel" : "";
+    const body = hasIcon(id)
+      ? `<div class="i-emoji">${iconOf(id)}</div><div class="i-name">${it.n}</div>`
+      : `<div class="i-name only">${it.n}</div>`;
+    return `<button class="item ${itemClass(id)} ${sel} ${live.has(id)?"live":""} ${id===freshId?"fresh":""}" data-id="${id}">${body}</button>`;
+  }).join("");
+  $("cnt").textContent = found.length;
+  $("tot").textContent = Object.keys(ITEMS).length;
+  $("cnt2").textContent = found.length;
+  $("tot2").textContent = Object.keys(ITEMS).length;
+}
+
+function renderSlot(which){
+  const el = $(which===0?"slotA":"slotB");
+  const id = slots[which];
+  if(!id){
+    el.className = "slot";
+    el.innerHTML = '<div class="s-hint">えらぶ</div>';
+  }else{
+    const it = ITEMS[id];
+    el.className = "slot full " + itemClass(id);
+    el.innerHTML = hasIcon(id)
+      ? `<div class="s-emoji">${iconOf(id)}</div><div class="s-name">${it.n}</div>`
+      : `<div class="s-name only">${it.n}</div>`;
+  }
+}
+function renderResult(id, isNew){
+  const el = $("result");
+  if(!id){
+    el.className = "result";
+    el.innerHTML = '<div class="r-q">?</div>';
+  }else{
+    const it = ITEMS[id];
+    el.className = "result on " + itemClass(id) + (isNew?" burst":"");
+    el.innerHTML = hasIcon(id)
+      ? `<div class="r-emoji">${iconOf(id)}</div><div class="r-name">${it.n}</div>`
+      : `<div class="r-name only">${it.n}</div>`;
+  }
+}
+function setMsg(text, cls){
+  const el = $("msg");
+  el.className = "msg" + (cls?" "+cls:"");
+  el.textContent = text;
+}
+
+/* ---------- game logic ---------- */
+function pick(id){
+  if(slots[0] && slots[1]){ slots = [null,null]; renderResult(null); }
+  hideWhy();
+  if(!slots[0]) slots[0] = id;
+  else slots[1] = id;
+  renderSlot(0); renderSlot(1); renderGrid();
+  sayItem(id);
+  if(slots[0] && slots[1]) setTimeout(combine, 550);
+  else setMsg("もうひとつ えらんでね");
+}
+
+function hideWhy(){
+  $("appealBtn").style.display = "none";
+  $("whyBtn").style.display = "none";
+  $("whyBox").className = "why-box";
+  lastKey = null;
+}
+
+function combine(){
+  const key = [slots[0],slots[1]].sort().join("|");
+  const out = recipeMap[key];
+
+  if(!out){
+    renderResult(null);
+    $("result").classList.add("shake");
+    setTimeout(()=>$("result").classList.remove("shake"), 320);
+    setMsg("うーん、この ふたつは まざらないみたい");
+    say("この二つは混ざらないみたい。", 0.95);
+    hideWhy();
+    failPair = [slots[0], slots[1]];
+    $("appealBtn").style.display = "block";
+    setTimeout(()=>{ slots=[null,null]; renderSlot(0); renderSlot(1); renderGrid(); setMsg("べつの くみあわせを ためそう"); }, 1100);
+    return;
+  }
+
+  const isNew = !found.includes(out);
+  if(isNew){ found.push(out); save(); session++; }
+  renderResult(out, isNew);
+  renderGrid(isNew?out:null);
+  renderGoals();
+
+  const it = ITEMS[out];
+  if(isNew && it.rare){
+    setMsg("★ すごい！ "+it.n+" を つくった！", "rare");
+    say(itemVoice(out) + "ができた！やったね！", 0.95);
+  }else if(isNew){
+    setMsg("はじめて つくったよ！ "+it.n, "new");
+    say(itemVoice(out) + "ができた！", 0.95);
+  }else{
+    setMsg(it.n+"（つくったことが あるよ）");
+    sayItem(out);
+  }
+
+  lastKey = key;
+  if(WHY[key]){ $("whyBtn").style.display = "block"; $("whyBox").className = "why-box"; }
+
+  if(opts.breaks && session>0 && session%15===0){
+    $("breakNote").style.display = "block";
+  }
+
+  setTimeout(()=>{ slots=[null,null]; renderSlot(0); renderSlot(1); renderGrid(); }, 1600);
+}
+
+function hint(){
+  // まだ作っていないもののうち、いま作れるレシピを1つ探して材料をひとつだけ教える
+  const doable = allRecipes().filter(([a,b,r]) =>
+    found.includes(a) && found.includes(b) && !found.includes(r));
+  if(!doable.length){
+    setMsg("いま つくれるものは ぜんぶ つくったよ！", "new");
+    say("全部作ったよ。", 0.95);
+    return;
+  }
+  const pickR = doable[Math.floor(Math.random()*doable.length)];
+  const shownId = pickR[Math.random()<0.5?0:1];
+  const shown = ITEMS[shownId];
+  const shownV = itemVoice(shownId);
+  setMsg("「"+shown.n+"」を つかうと なにか できそう", "new");
+  say(shownV + "を使うと、何かできそう。", 0.95);
+}
+
+/* ---------- events ---------- */
+$("grid").addEventListener("click", e=>{
+  const b = e.target.closest(".item");
+  if(b) pick(b.dataset.id);
+});
+$("slotA").addEventListener("click", ()=>{ slots[0]=null; renderSlot(0); renderResult(null); renderGrid(); });
+$("slotB").addEventListener("click", ()=>{ slots[1]=null; renderSlot(1); renderResult(null); renderGrid(); });
+$("clearBtn").addEventListener("click", ()=>{
+  slots=[null,null]; renderSlot(0); renderSlot(1); renderResult(null); renderGrid();
+  hideWhy(); setMsg("したから ふたつ えらんでね");
+});
+$("hintBtn").addEventListener("click", hint);
+$("whyBtn").addEventListener("click", ()=>{
+  if(!lastKey || !WHY[lastKey]) return;
+  const box = $("whyBox");
+  const cls = recipeClass(lastKey);
+  const isFic = cls === "fic";
+  const isLike = cls === "lik";
+  const note = isFic  ? '<div class="talk">💬 ' + TALK_NOTE + '</div>'
+             : isLike ? '<div class="talk">🔍 ' + LIKE_NOTE + '</div>' : '';
+  const flagged = doubts.some(d => d.k === lastKey);
+  box.innerHTML = WHY[lastKey] + note
+    + '<button class="flag' + (flagged ? " done" : "") + '" id="flagBtn">'
+    + (flagged ? "✓ 「ちがうかも」と つたえたよ" : "🤔 ちがうんじゃないかな？") + '</button>';
+  box.className = "why-box on" + (isFic ? " fic" : isLike ? " lik" : "");
+  const voice = WHY_VOICE[lastKey] || WHY[lastKey].replace(/ /g,"");
+  say(voice + (isFic ? TALK_NOTE_VOICE : isLike ? LIKE_NOTE_VOICE : ""), 0.95);
+  whyLog.push({k:lastKey, t:Date.now()});
+  if(whyLog.length > 500) whyLog = whyLog.slice(-500);
+  save();
+});
+
+function renderVoiceList(){
+  $("voiceList").innerHTML =
+    '<div style="padding:8px 0;color:#8ea3b8;font-size:12px;line-height:1.6">'
+    + 'ボタンを おすと その よみかたで 発音します。<br>'
+    + '自然に きこえた ほうを えらんで ください。<br>'
+    + 'どちらも 不自然なら、下の らんに よみかたを 直接 書けます（▶で ためせます）。<br>'
+    + '<b style="color:#6fbf5b">この設定は リセットしても のこります。</b></div>'
+    + Object.keys(ITEMS).sort((x,y)=> byKana(ITEMS[x].n, ITEMS[y].n)).map(id=>{
+        const it = ITEMS[id];
+        const h = opts.read[id] === "h";
+        const cv = (opts.custom[id] || "");
+        const useC = !!cv.trim();
+        return `<div class="vrow2">
+          <div class="vline"><span class="vn">${it.n}</span>
+            <button class="vb ${(!useC && !h)?"pick":""}" data-v="${id}" data-m="k">${it.k}</button>
+            <button class="vb ${(!useC && h)?"pick":""}" data-v="${id}" data-m="h">${it.s}</button></div>
+          <div class="vline">
+            <input class="vfld ${useC?"on":""}" data-c="${id}" value="${cv.replace(/"/g,"&quot;")}" placeholder="じぶんで よみかたを かく（にゅうりょくすると こちらを つかいます）">
+            <button class="vb" data-play="${id}">▶</button>
+          </div>
+        </div>`;
+      }).join("");
+}
+$("voiceList").addEventListener("input", e=>{
+  const f = e.target.closest("[data-c]");
+  if(!f) return;
+  opts.custom[f.dataset.c] = f.value;
+  f.classList.toggle("on", !!f.value.trim());
+  save();
+});
+$("voiceList").addEventListener("click", e=>{
+  const pl = e.target.closest("[data-play]");
+  if(pl){ say(itemVoice(pl.dataset.play)); return; }
+  const b = e.target.closest(".vb");
+  if(!b || !b.dataset.v) return;
+  const id = b.dataset.v, mode = b.dataset.m;
+  opts.read[id] = mode;
+  opts.custom[id] = "";          /* 2択を えらんだら 自由入力は 解除 */
+  save();
+  say(mode === "h" ? ITEMS[id].s : ITEMS[id].k);
+  renderVoiceList();
+});
+$("voiceBtn").addEventListener("click", ()=>{
+  const el = $("voiceList");
+  if(el.style.display !== "none"){ el.style.display="none"; $("voiceBtn").textContent="ひらく"; return; }
+  renderVoiceList();
+  el.style.display="block"; $("voiceBtn").textContent="とじる";
+});
+
+$("whyBox").addEventListener("click", e=>{
+  if(!e.target.closest("#flagBtn") || !lastKey) return;
+  if(!doubts.some(d => d.k === lastKey)) doubts.push({k:lastKey, note:"", t:Date.now()});
+  save(); updateDoubtBadge();
+  const b = document.getElementById("flagBtn");
+  if(b){ b.className = "flag done"; b.textContent = "✓ 「ちがうかも」と つたえたよ"; }
+  click(520);
+  say("ちがうかもしれない、と伝えたよ。おうちの人が見てくれるよ。", 0.95);
+  toast("「ちがうかも」を おくりました");
+  openDoubtNote(lastKey);
+});
+
+function updateDoubtBadge(){
+  const n = doubts.length;
+  $("doubtBadge").textContent = n ? n : "";
+  $("doubtBadge").style.display = n ? "inline-block" : "none";
+}
+
+function renderDoubts(){
+  const el = $("doubtList");
+  if(!doubts.length){
+    el.innerHTML = '<div style="padding:10px 0;font-size:13px;color:#8ea3b8">まだ ありません。</div>';
+    return;
+  }
+  el.innerHTML = doubts.map((d,i)=>{
+    const [a,b] = d.k.split("|");
+    const r = recipeMap[d.k];
+    const cur = recipeClass(d.k);
+    return `<div class="prop">
+      <div class="pt">${ITEMS[a].n} ＋ ${ITEMS[b].n} → ${r?ITEMS[r].n:"?"}</div>
+      <div class="pr">${WHY[d.k] || ""}</div>
+      ${d.note ? '<div class="pr" style="color:#ffd88a">こども：' + d.note + '</div>' : ""}
+      <div style="font-size:11px;color:#8ea3b8">この せつめいの あつかい</div>
+      <div class="cls" data-i="${i}">
+        ${["real","lik","fic"].map(c=>`<button data-c="${c}" class="${c===cur?"on":""}">${CLS_LABEL[c]}</button>`).join("")}
+      </div>
+      <button class="btn" data-done="${i}" style="padding:7px">かくにん した</button>
+    </div>`;
+  }).join("");
+}
+
+$("doubtList").addEventListener("click", e=>{
+  const c = e.target.closest(".cls button");
+  if(c){
+    const i = +c.parentElement.dataset.i;
+    classOverride[doubts[i].k] = c.dataset.c;
+    save(); renderDoubts(); toast("「" + CLS_LABEL[c.dataset.c] + "」に かえました");
+    return;
+  }
+  const dn = e.target.closest("[data-done]");
+  if(dn){
+    doubts.splice(+dn.dataset.done, 1);
+    save(); renderDoubts(); updateDoubtBadge(); toast("かくにん しました");
+  }
+});
+
+
+/* ================= アイコンを しゃしんに する ================= */
+function shrinkToDataURL(file, size, cb){
+  const img = new Image();
+  const url = URL.createObjectURL(file);
+  img.onload = ()=>{
+    const c = document.createElement("canvas");
+    c.width = c.height = size;
+    const g = c.getContext("2d");
+    const m = Math.min(img.width, img.height);
+    g.drawImage(img, (img.width-m)/2, (img.height-m)/2, m, m, 0, 0, size, size);
+    URL.revokeObjectURL(url);
+    cb(c.toDataURL("image/jpeg", 0.72));
+  };
+  img.onerror = ()=>{ URL.revokeObjectURL(url); toast("この しゃしんは よみこめませんでした"); };
+  img.src = url;
+}
+
+function renderPhotoList(){
+  const q = kanaKey(($("phFind").value || "").trim());
+  const ids = Object.keys(ITEMS)
+    .filter(id => !q || kanaKey(ITEMS[id].n).indexOf(q) >= 0)
+    .sort((x,y)=> byKana(ITEMS[x].n, ITEMS[y].n));
+  $("phList").innerHTML = ids.map(id=>`
+    <div class="phrow">
+      <div class="pv">${photos[id] ? '<img src="'+photos[id]+'">' : (ITEMS[id].e || "—")}</div>
+      <div class="pn">${ITEMS[id].n}</div>
+      <label class="phlbl">${photos[id] ? "かえる" : "しゃしん"}
+        <input type="file" accept="image/*" data-ph="${id}">
+      </label>
+      ${photos[id] ? `<button class="phlbl" data-phdel="${id}" style="background:#5a2626">けす</button>` : ""}
+    </div>`).join("") || '<div style="padding:10px 0;font-size:13px;color:#8ea3b8">みつかりません。</div>';
+}
+
+$("phBox").addEventListener("change", e=>{
+  const inp = e.target.closest("[data-ph]");
+  if(!inp || !inp.files || !inp.files[0]) return;
+  const id = inp.dataset.ph;
+  shrinkToDataURL(inp.files[0], 128, dataURL=>{
+    const backup = photos[id];
+    photos[id] = dataURL;
+    if(savePhotos()){ renderPhotoList(); renderAll(); toast("しゃしんを つけました"); }
+    else { if(backup) photos[id] = backup; else delete photos[id]; }
+  });
+  inp.value = "";
+});
+$("phBox").addEventListener("input", e=>{ if(e.target.id === "phFind") renderPhotoList(); });
+$("phBox").addEventListener("click", e=>{
+  const d = e.target.closest("[data-phdel]");
+  if(!d) return;
+  delete photos[d.dataset.phdel];
+  savePhotos(); renderPhotoList(); renderAll(); toast("もとの えに もどしました");
+});
+$("phBtn").addEventListener("click", ()=>{
+  const el = $("phBox");
+  if(el.style.display !== "none"){ el.style.display="none"; $("phBtn").textContent="ひらく"; return; }
+  $("phFind").value = ""; renderPhotoList();
+  el.style.display="block"; $("phBtn").textContent="とじる";
+});
+
+/* ================= レシピを なおす（おとな） ================= */
+let edNewMode = false;
+function itemOptions(sel){
+  return Object.keys(ITEMS).sort((x,y)=>byKana(ITEMS[x].n, ITEMS[y].n))
+    .map(id=>`<option value="${id}" ${id===sel?"selected":""}>${ITEMS[id].n}</option>`).join("");
+}
+function edKey(){ return [$("edA").value, $("edB").value].sort().join("|"); }
+
+function renderEditForm(){
+  const k = edKey();
+  const cur = recipeMap[k];
+  const e = recipeEdits[k] || {};
+  const r = e.r || cur || "";
+  const why = e.why !== undefined ? e.why : (WHY[k] || "");
+  const voice = e.voice !== undefined ? e.voice : (WHY_VOICE[k] || "");
+  const cls = e.cls || recipeClass(k);
+
+  $("edNow").innerHTML = cur
+    ? "いまは <b>" + ITEMS[cur].n + "</b> が できます"
+    : "いまは <b>なにも できません</b>（あたらしく つくれます）";
+
+  $("edForm").innerHTML = `
+    <div class="fl">できるもの</div>
+    <div style="display:flex;gap:6px;margin-bottom:8px">
+      <select id="edR" class="pfld" style="margin:0">${itemOptions(r)}</select>
+      <button class="btn" id="edNewBtn" style="flex:none;padding:7px 10px;font-size:12px">あたらしく</button>
+    </div>
+    <div id="edNewWrap" style="display:${edNewMode?"block":"none"}">
+      <div class="fl">あたらしい なまえ</div>
+      <input id="edNewName" class="pfld" placeholder="れい：かじ">
+      <div class="fl">よみあげ（漢字まじり・省略可）</div>
+      <input id="edNewVoice" class="pfld" placeholder="れい：火事">
+      <div class="fl">え</div>
+      <div class="emo" id="edEmo"></div>
+    </div>
+    <div class="fl">せつめい（こどもに 見せる・ひらがな）</div>
+    <textarea id="edWhy" class="pfld" rows="2">${why}</textarea>
+
+```
+<div class="fl">読み上げ用（漢字まじり・省略可）</div>
+<textarea id="edVoice" class="pfld" rows="2">${voice}</textarea>
+<div class="fl">この せつめいの あつかい</div>
+<div class="cls" id="edCls">
+  ${["real","lik","fic"].map(c=>`<button data-c="${c}" class="${c===cls?"on":""}">${CLS_LABEL[c]}</button>`).join("")}
+</div>
+<div style="display:flex;gap:8px;margin-top:6px">
+  ${recipeEdits[k] ? '<button class="btn danger" id="edReset" style="padding:7px">もとに もどす</button>' : ''}
+  <button class="btn hint" id="edSave" style="padding:7px">ほぞん する</button>
+</div>`;
+```
+
+if(edNewMode){
+$(“edEmo”).innerHTML = [””].concat(
+emojiSuggestions({a:$(“edA”).value, b:$(“edB”).value, name:””})
+).map(x=>`<button data-e="${x}" class="${x?"":"noemo"} ${x===edEmoPick?"pick":""}">${x||"なし"}</button>`).join(””);
+}
+}
+let edEmoPick = “”;
+let edCls = null;
+
+$(“editBox”).addEventListener(“change”, e=>{
+if(e.target.id === “edA” || e.target.id === “edB”){ edNewMode = false; edCls = null; renderEditForm(); }
+});
+$(“editBox”).addEventListener(“click”, e=>{
+if(e.target.closest(”#edNewBtn”)){ edNewMode = !edNewMode; renderEditForm(); return; }
+const em = e.target.closest(”#edEmo button”);
+if(em){ edEmoPick = em.dataset.e; renderEditForm(); return; }
+const cb = e.target.closest(”#edCls button”);
+if(cb){ edCls = cb.dataset.c; renderEditForm(); return; }
+
+if(e.target.closest(”#edReset”)){
+const k = edKey();
+askConfirm(“この レシピを もとの じょうたいに もどしますか？”, ()=>{
+delete recipeEdits[k]; delete classOverride[k];
+location.reload();
+}, “もどす”);
+return;
+}
+if(e.target.closest(”#edSave”)){
+const k = edKey();
+let rid = $(“edR”).value;
+let newItem = null;
+if(edNewMode){
+const nm = ($(“edNewName”).value || “”).trim();
+if(!nm){ toast(“あたらしい なまえを いれてください”); return; }
+rid = “mine_” + Date.now().toString(36);
+newItem = {n:nm, s:nm, k:(($(“edNewVoice”).value||””).trim() || nm), e:edEmoPick};
+}
+const why = ($(“edWhy”).value || “”).trim();
+recipeEdits[k] = {
+r: rid, newItem,
+why, voice: ($(“edVoice”).value || “”).trim(),
+cls: edCls || recipeClass(k)
+};
+mergeCustom(); save(); renderAll();
+edNewMode = false; edEmoPick = “”; edCls = null;
+renderEditForm();
+toast(“ほぞんしました”);
+}
+});
+$(“editBtn”).addEventListener(“click”, ()=>{
+const el = $(“editBox”);
+if(el.style.display !== “none”){ el.style.display=“none”; $(“editBtn”).textContent=“ひらく”; return; }
+$(“edA”).innerHTML = itemOptions(“mizu”);
+$(“edB”).innerHTML = itemOptions(“tsuchi”);
+edNewMode = false; edCls = null; edEmoPick = “”;
+renderEditForm();
+el.style.display=“block”; $(“editBtn”).textContent=“とじる”;
+});
+
+$(“bakBtn”).addEventListener(“click”, ()=>{
+const el = $(“bakBox”);
+if(el.style.display !== “none”){ el.style.display=“none”; $(“bakBtn”).textContent=“ひらく”; return; }
+$(“bakText”).value = JSON.stringify({found, opts, whyLog, customItems, customRecipes, proposals, doubts, classOverride, recipeEdits});  /* 文字列は しゃしん ぬき */
+el.style.display=“block”; $(“bakBtn”).textContent=“とじる”;
+});
+$(“bakCopy”).addEventListener(“click”, ()=>{
+const t = $(“bakText”);
+t.select(); t.setSelectionRange(0, 999999);
+let ok = false;
+try{ ok = document.execCommand(“copy”); }catch(e){}
+if(!ok && navigator.clipboard){
+navigator.clipboard.writeText(t.value).then(()=>toast(“コピーしました”), ()=>toast(“長押しで コピーしてください”));
+return;
+}
+toast(ok ? “コピーしました” : “長押しで コピーしてください”);
+});
+function fullData(){
+return {v:2, found, opts, whyLog, customItems, customRecipes, proposals, doubts,
+classOverride, recipeEdits, photos};
+}
+$(“bakSave”).addEventListener(“click”, ()=>{
+try{
+const d = new Date();
+const name = “blocklab-” + d.getFullYear() + (“0”+(d.getMonth()+1)).slice(-2) + (“0”+d.getDate()).slice(-2) + “.json”;
+const url = URL.createObjectURL(new Blob([JSON.stringify(fullData())], {type:“application/json”}));
+const a = document.createElement(“a”);
+a.href = url; a.download = name; document.body.appendChild(a); a.click();
+setTimeout(()=>{ document.body.removeChild(a); URL.revokeObjectURL(url); }, 1000);
+toast(“ファイルに ほぞんしました”);
+}catch(e){ toast(“ほぞんできませんでした”); }
+});
+$(“bakFile”).addEventListener(“change”, e=>{
+const f = e.target.files && e.target.files[0];
+if(!f) return;
+const rd = new FileReader();
+rd.onload = ()=>{
+let d;
+try{ d = JSON.parse(rd.result); }catch(err){ toast(“よみこめませんでした”); return; }
+askConfirm(“いまの データを 上書きして ふくげんしますか？”, ()=>{
+applyData(d);
+if(d.photos){ photos = d.photos; savePhotos(); }
+mergeCustom(); save();
+renderAll(); updatePropBadge(); updateDoubtBadge();
+toast(“ふくげんしました”);
+}, “ふくげんする”);
+};
+rd.readAsText(f);
+e.target.value = “”;
+});
+
+$(“bakLoad”).addEventListener(“click”, ()=>{
+let d;
+try{ d = JSON.parse($(“bakText”).value); }
+catch(e){ toast(“よみこめませんでした（文字が欠けているかも）”); return; }
+askConfirm(“いまの データを 上書きして ふくげんしますか？”, ()=>{
+applyData(d); mergeCustom(); save();
+renderAll(); updatePropBadge(); updateDoubtBadge();
+$(“bakBox”).style.display=“none”; $(“bakBtn”).textContent=“ひらく”;
+toast(“ふくげんしました”);
+}, “ふくげんする”);
+});
+
+$(“doubtBtn”).addEventListener(“click”, ()=>{
+const el = $(“doubtList”);
+if(el.style.display !== “none”){ el.style.display=“none”; $(“doubtBtn”).textContent=“ひらく”; return; }
+renderDoubts(); el.style.display=“block”; $(“doubtBtn”).textContent=“とじる”;
+});
+
+$(“logBtn”).addEventListener(“click”, ()=>{
+const el = $(“logList”);
+if(el.style.display !== “none”){ el.style.display=“none”; $(“logBtn”).textContent=“ひらく”; return; }
+if(!whyLog.length){
+el.innerHTML = ‘<div style="padding:10px 0">まだ「なんで？」は おされていません。</div>’;
+}else{
+const agg = {};
+whyLog.forEach(e=>{
+if(!agg[e.k]) agg[e.k] = {n:0, last:0};
+agg[e.k].n++; agg[e.k].last = Math.max(agg[e.k].last, e.t);
+});
+const keys = Object.keys(agg).sort((a,b)=> agg[b].n - agg[a].n || agg[b].last - agg[a].last);
+const label = k=>{
+const [a,b] = k.split(”|”);
+const r = recipeMap[k];
+return ITEMS[a].n+” ＋ “+ITEMS[b].n+” → “+ITEMS[r].n
++ (FICTION.has(k)  ? ‘<span class="badge">おはなし</span>’
+: LIKENESS.has(k) ? ‘<span class="badge lik">たとえ</span>’ : “”);
+};
+const fmt = t=>{
+const d = new Date(t);
+return (d.getMonth()+1)+”/”+d.getDate();
+};
+el.innerHTML =
+’<div style="padding:6px 0 10px;color:#8ea3b8">ぜんぶで ’+whyLog.length+’かい ／ ’+keys.length+‘しゅるい</div>’ +
+keys.map(k=>`<div class="log-row"><span class="n">${agg[k].n}</span> <span class="q">${label(k)}<br><span style="font-size:11px;color:#8ea3b8">${WHY[k]||""}</span></span> <span class="d">${fmt(agg[k].last)}</span></div>`).join(””) +
+‘<button class="btn danger" id="logClear" style="margin-top:12px">きろくを けす</button>’;
+setTimeout(()=>{
+const c = document.getElementById(“logClear”);
+if(c) c.addEventListener(“click”, ()=>{
+askConfirm(”「なんで？」の きろくを すべて消しますか？”, ()=>{
+whyLog=[]; save(); $(“logBtn”).click(); $(“logBtn”).click(); toast(“きろくを消しました”);
+}, “消す”);
+});
+},0);
+}
+el.style.display=“block”; $(“logBtn”).textContent=“とじる”;
+});
+$(“breakNote”).addEventListener(“click”, ()=>{ $(“breakNote”).style.display=“none”; });
+
+$(“gearBtn”).addEventListener(“click”, ()=>$(“veil”).classList.add(“on”));
+$(“closeBtn”).addEventListener(“click”, ()=>$(“veil”).classList.remove(“on”));
+$(“veil”).addEventListener(“click”, e=>{ if(e.target===$(“veil”)) $(“veil”).classList.remove(“on”); });
+
+$(“swSpeak”).addEventListener(“click”, e=>{
+opts.speak=!opts.speak; e.target.classList.toggle(“on”,opts.speak); save();
+});
+$(“swGlow”).addEventListener(“click”, e=>{
+opts.glow = opts.glow === false; e.target.classList.toggle(“on”, opts.glow); save(); renderGrid();
+});
+$(“swKey”).addEventListener(“click”, e=>{
+opts.keySound=!opts.keySound; e.target.classList.toggle(“on”,opts.keySound); save();
+if(opts.keySound) click(760);
+});
+$(“swBreak”).addEventListener(“click”, e=>{
+opts.breaks=!opts.breaks; e.target.classList.toggle(“on”,opts.breaks); save();
+});
+$(“recipeBtn”).addEventListener(“click”, ()=>{
+const el = $(“recipeList”);
+if(el.style.display===“none”){
+const by = {};
+allRecipes().forEach(([a,b,r])=>{
+(by[r]=by[r]||[]).push([ITEMS[a].n, ITEMS[b].n].sort(byKana).join(” ＋ “));
+});
+const sorted = Object.keys(by).sort((x,y)=> byKana(ITEMS[x].n, ITEMS[y].n));
+let last = “”;
+el.innerHTML = sorted.map(r=>{
+const g = gyoOf(ITEMS[r].n);
+const head = g !== last ? `<div class="gyo">${g}</div>` : “”;
+last = g;
+const cls = recipeClass([].concat(…allRecipes().filter(t=>t[2]===r).map(t=>[[t[0],t[1]].sort().join(”|”)]))[0] || “”);
+const emo = (ITEMS[r].e && !ITEMS[r].e.startsWith(”<svg”)) ? ITEMS[r].e : “”;
+return head + `<div style="margin-bottom:8px"><span class="rc">${emo} ${ITEMS[r].n}</span> <span style="font-size:11px;color:#8ea3b8">（${by[r].length}とおり）</span><br> <span style="font-size:12px">${by[r].sort(byKana).join(" ／ ")}</span></div>`;
+}).join(””);
+el.style.display=“block”;
+$(“recipeBtn”).textContent=“とじる”;
+}else{
+el.style.display=“none”; $(“recipeBtn”).textContent=“ひらく”;
+}
+});
+$(“resetBtn”).addEventListener(“click”, ()=>{
+askConfirm(
+“はっけんした ものを 消して、さいしょから やりなおしますか？\n\n” +
+“・じぶんで かんがえた アイテム（きんいろ）は のこります\n” +
+“・ていあん と レシピ、「なんで？」の きろく も のこります\n” +
+“・はつおん の せってい も のこります”,
+()=>{
+const mine = found.filter(id => MINE_ITEMS.has(id));
+found = […BASE, …mine];
+session = 0; slots = [null,null];
+save();
+$(“breakNote”).style.display = “none”;
+hideWhy();
+setMsg(“したから ふたつ えらんでね”);
+renderAll();
+$(“veil”).classList.remove(“on”);
+toast(“さいしょから はじめられます”);
+},
+“リセットする”
+);
+});
+
+/* ================= ダイアログ（iframe内でも動く自前実装） ================= */
+function recipeClass(k){
+if(classOverride[k]) return classOverride[k];
+if(FICTION.has(k))  return “fic”;
+if(LIKENESS.has(k)) return “lik”;
+return “real”;
+}
+const CLS_LABEL = {real:“ほんとう”, lik:“たとえ”, fic:“おはなし”};
+
+let askAction = null;
+function askConfirm(text, onYes, yesLabel){
+$(“askText”).textContent = text;
+$(“askYes”).textContent = yesLabel || “はい”;
+askAction = onYes;
+$(“askVeil”).classList.add(“on”);
+}
+$(“askNo”).addEventListener(“click”, ()=>{ askAction=null; $(“askVeil”).classList.remove(“on”); });
+$(“askYes”).addEventListener(“click”, ()=>{
+const fn = askAction; askAction = null;
+$(“askVeil”).classList.remove(“on”);
+if(fn) fn();
+});
+$(“askVeil”).addEventListener(“click”, e=>{
+if(e.target===$(“askVeil”)){ askAction=null; $(“askVeil”).classList.remove(“on”); }
+});
+
+let toastTimer = null;
+function toast(text){
+const el = $(“toast”);
+el.textContent = text;
+el.classList.add(“on”);
+clearTimeout(toastTimer);
+toastTimer = setTimeout(()=> el.classList.remove(“on”), 2600);
+}
+
+/* ================= キーの おと ================= */
+let actx = null;
+function click(freq){
+if(!opts.keySound) return;
+try{
+if(!actx) actx = new (window.AudioContext || window.webkitAudioContext)();
+if(actx.state === “suspended”) actx.resume();
+const o = actx.createOscillator(), g = actx.createGain();
+o.type = “sine”; o.frequency.value = freq;
+g.gain.setValueAtTime(0.0001, actx.currentTime);
+g.gain.exponentialRampToValueAtTime(0.12, actx.currentTime + 0.008);
+g.gain.exponentialRampToValueAtTime(0.0001, actx.currentTime + 0.09);
+o.connect(g); g.connect(actx.destination);
+o.start(); o.stop(actx.currentTime + 0.1);
+}catch(e){}
+}
+const NO_SPEAK = {“ー”:1, “、”:1};
+function sayKey(ch){
+click(760);
+if(!opts.keySound) return;
+const h = toHira(ch);
+if(NO_SPEAK[h]) return;
+say(h, 0.9);
+}
+
+/* ================= ひらがなキーボード ================= */
+const KB_ROWS = [
+[“あ”,“い”,“う”,“え”,“お”],
+[“か”,“き”,“く”,“け”,“こ”],
+[“さ”,“し”,“す”,“せ”,“そ”],
+[“た”,“ち”,“つ”,“て”,“と”],
+[“な”,“に”,“ぬ”,“ね”,“の”],
+[“は”,“ひ”,“ふ”,“へ”,“ほ”],
+[“ま”,“み”,“む”,“め”,“も”],
+[“や”,””,  “ゆ”,””,  “よ”],
+[“ら”,“り”,“る”,“れ”,“ろ”],
+[“わ”,“を”,“ん”,“ー”,”、”]
+];
+const DAKU = {“か”:“が”,“き”:“ぎ”,“く”:“ぐ”,“け”:“げ”,“こ”:“ご”,
+“さ”:“ざ”,“し”:“じ”,“す”:“ず”,“せ”:“ぜ”,“そ”:“ぞ”,
+“た”:“だ”,“ち”:“ぢ”,“つ”:“づ”,“て”:“で”,“と”:“ど”,
+“は”:“ば”,“ひ”:“び”,“ふ”:“ぶ”,“へ”:“べ”,“ほ”:“ぼ”};
+const HANDAKU = {“は”:“ぱ”,“ひ”:“ぴ”,“ふ”:“ぷ”,“へ”:“ぺ”,“ほ”:“ぽ”};
+const SMALL = {“つ”:“っ”,“や”:“ゃ”,“ゆ”:“ゅ”,“よ”:“ょ”,
+“あ”:“ぁ”,“い”:“ぃ”,“う”:“ぅ”,“え”:“ぇ”,“お”:“ぉ”,“わ”:“ゎ”};
+const UN = {};
+[DAKU,HANDAKU,SMALL].forEach(m=>Object.keys(m).forEach(k=>{ UN[m[k]] = k; }));
+
+let kbKana = false;
+let apStep = 0;
+let apVals = [””,””];
+
+function toKana(ch){
+if(!kbKana) return ch;
+const c = ch.charCodeAt(0);
+return (c >= 0x3041 && c <= 0x3096) ? String.fromCharCode(c + 0x60) : ch;
+}
+function toHira(ch){
+const c = ch.charCodeAt(0);
+return (c >= 0x30A1 && c <= 0x30F6) ? String.fromCharCode(c - 0x60) : ch;
+}
+function renderKb(){
+$(“kbGrid”).innerHTML = KB_ROWS.map(row =>
+row.map(ch => ch
+? `<button class="kb" data-ch="${ch}">${toKana(ch)}</button>`
+: `<button class="kb blank"></button>`).join(””)
+).join(””);
+$(“kbKana”).textContent = kbKana ? “あ” : “ア”;
+$(“kbKana”).classList.toggle(“on”, kbKana);
+}
+function renderField(){ $(“apText”).textContent = apVals[apStep]; }
+function kbInsert(ch){
+apVals[apStep] += toKana(ch);
+renderField();
+sayKey(ch);
+}
+function kbModify(map){
+let v = apVals[apStep];
+if(!v) return;
+const last = v.slice(-1);
+const hira = toHira(last);
+const wasKana = hira !== last;
+let next;
+if(UN[hira] !== undefined && map[UN[hira]] === hira) next = UN[hira];
+else if(map[hira] !== undefined) next = map[hira];
+else return;
+if(wasKana) next = String.fromCharCode(next.charCodeAt(0) + 0x60);
+apVals[apStep] = v.slice(0,-1) + next;
+renderField();
+sayKey(next);
+}
+
+$(“kbGrid”).addEventListener(“click”, e=>{
+const b = e.target.closest(”[data-ch]”);
+if(b) kbInsert(b.dataset.ch);
+});
+$(“kbKana”).addEventListener(“click”, ()=>{ kbKana = !kbKana; renderKb(); click(kbKana?980:640); });
+document.querySelector(”.kbTop”).addEventListener(“click”, e=>{
+const b = e.target.closest(”[data-fn]”);
+if(!b) return;
+const f = b.dataset.fn;
+if(f === “bs”){ apVals[apStep] = apVals[apStep].slice(0,-1); renderField(); click(240); }
+else if(f === “dak”)   kbModify(DAKU);
+else if(f === “han”)   kbModify(HANDAKU);
+else if(f === “small”) kbModify(SMALL);
+});
+
+/* ================= 異議申し立て（こども） ================= */
+function reasonChips(){
+if(apMode === “doubt”){
+return [
+“ほんとうは そう ならないとおもうから”,
+“ならったことと ちがうから”,
+“ほんで よんだのと ちがうから”,
+“よく わからなかったから”
+];
+}
+const A = ITEMS[failPair[0]].n, B = ITEMS[failPair[1]].n, N = apVals[0] || “それ”;
+return [
+A + “と “ + B + “を まぜたら できるとおもうから”,
+A + “が “ + N + “に なるとおもうから”,
+“テレビや ゲームで みたから”,
+“ほんで よんだから”,
+“まえに つくったことが あるから”,
+“なんとなく そう おもったから”
+];
+}
+function renderChips(){
+const el = $(“apChips”);
+if(apStep !== 1){ el.innerHTML = “”; return; }
+el.innerHTML = ‘<div class="lbl2">えらんでも いいし、じぶんで かいても いいよ</div>’
++ reasonChips().map(t=>`<button data-r="${t}">${t}</button>`).join(””);
+}
+$(“apChips”).addEventListener(“click”, e=>{
+const b = e.target.closest(”[data-r]”);
+if(!b) return;
+apVals[1] = b.dataset.r;
+renderField();
+click(880);
+say(b.dataset.r, 0.95);
+});
+
+function openDoubtNote(k){
+apMode = “doubt”;
+doubtKey = k;
+const [a,b] = k.split(”|”);
+$(“appealPair”).textContent = ITEMS[a].n + “ ＋ “ + ITEMS[b].n + “ → “ + (recipeMap[k] ? ITEMS[recipeMap[k]].n : “?”);
+apVals = [””,””]; apStep = 1; kbKana = false;
+apRender();
+$(“appealVeil”).classList.add(“on”);
+say(“どこが違うと思う？”, 0.95);
+}
+
+let doubtKey = null;
+
+function apRender(){
+const doubt = apMode === “doubt”;
+const first = apStep === 0;
+$(“apQ”).textContent    = doubt ? “どこが ちがうと おもう？”
+: first ? “① なにが できると おもう？” : “② どうして そう おもったの？”;
+$(“apHint”).textContent = doubt ? “かかなくても いいよ。「とじる」で おわり。”
+: first ? “れい：どろだんご” : “したから えらぶか、キーボードで かいてね（なくても いいよ）”;
+$(“apNext”).textContent = doubt ? “おくる” : first ? “つぎへ” : “おくる”;
+$(“apBack”).textContent = doubt ? “とじる” : first ? “やめる” : “もどる”;
+$(“apMsg”).textContent = “”;
+renderField();
+renderKb();
+renderChips();
+}
+$(“appealBtn”).addEventListener(“click”, ()=>{
+if(!failPair) return;
+$(“appealPair”).textContent = ITEMS[failPair[0]].n + “ ＋ “ + ITEMS[failPair[1]].n + “ → ？”;
+apMode = “appeal”;
+apVals = [””,””]; apStep = 0; kbKana = false;
+apRender();
+$(“appealVeil”).classList.add(“on”);
+say(“なにができると思う？”, 0.95);
+});
+$(“apBack”).addEventListener(“click”, ()=>{
+if(apMode === “doubt”){ $(“appealVeil”).classList.remove(“on”); return; }
+if(apStep === 1){ apStep = 0; apRender(); }
+else $(“appealVeil”).classList.remove(“on”);
+});
+$(“appealVeil”).addEventListener(“click”, e=>{ if(e.target===$(“appealVeil”)) $(“appealVeil”).classList.remove(“on”); });
+$(“apNext”).addEventListener(“click”, ()=>{
+if(apMode === “doubt”){
+const d = doubts.find(x => x.k === doubtKey);
+if(d) d.note = apVals[1].trim();
+save();
+$(“appealVeil”).classList.remove(“on”);
+toast(“おくりました”);
+say(“おくったよ。ありがとう。”, 0.95);
+return;
+}
+if(apStep === 0){
+if(!apVals[0].trim()){ $(“apMsg”).textContent = “なにが できるか いれてね。”; return; }
+apStep = 1; apRender();
+say(“どうしてそう思ったの？”, 0.95);
+return;
+}
+proposals.push({a:failPair[0], b:failPair[1], name:apVals[0].trim(), why:apVals[1].trim(), t:Date.now()});
+save();
+$(“appealVeil”).classList.remove(“on”);
+setMsg(“おくったよ！ おうちの人が みてくれるよ。”, “new”);
+say(“送ったよ。おうちの人が見てくれるよ。”, 0.95);
+$(“appealBtn”).style.display = “none”;
+updatePropBadge();
+});
+
+function updatePropBadge(){
+$(“propBadge”).textContent = proposals.length ? proposals.length : “”;
+$(“propBadge”).style.display = proposals.length ? “inline-block” : “none”;
+}
+
+/* ===== 提案の内容に合わせて えの候補を出す ===== */
+const ITEM_EMOJI = {
+mizu:[“💧”,“🌊”,“🫧”], tsuchi:[“🟫”,“🪨”,“🌱”], hi:[“🔥”,“🕯️”,“✨”], kaze:[“💨”,“🍃”,“🌀”],
+tane:[“🌱”,“🌰”,“🪴”], tamago:[“🥚”,“🐣”,“🍳”], yuki:[“❄️”,“⛄”,“🌨️”],
+doro:[“🟤”,“🟫”,“🫘”], ishi:[“🪨”,“⚪”,“🗿”], yuge:[“♨️”,“☁️”,“🫧”], suna:[“🏜️”,“⏳”,“🟡”],
+umi:[“🌊”,“🐚”,“🐟”], yama:[“⛰️”,“🏔️”,“🗻”], koori:[“🧊”,“❄️”,“💠”], renga:[“🧱”,“🏠”],
+garasu:[“🔷”,“🪟”,“🥛”], kazan:[“🌋”,“🔥”], yougan:[“🌋”,“🔥”], yukiyama:[“🏔️”,“❄️”],
+sakana:[“🐟”,“🐠”,“🍣”], tokage:[“🦎”,“🐍”], kyouryuu:[“🦕”,“🦖”,“🥚”], gojira:[“🦖”,“💥”,“🌆”],
+kusa:[“🌿”,“🍀”,“🌾”], ki:[“🌳”,“🪵”,“🍎”], mori:[“🌲”,“🌳”,“🦉”], doubutsu:[“🐾”,“🐕”,“🐻”],
+sonic:[“🦔”,“👟”,“💨”], ring:[“💍”,“⭕”,“🟡”], tsuruhashi:[“⛏️”,“🔨”], tetsu:[“🔩”,“⚙️”,“🔗”],
+sumi:[“⬛”,“🔥”], daiya:[“💎”,“✨”], kin:[“🥇”,“👑”,“🪙”], ken:[“⚔️”,“🗡️”,“🛡️”],
+ita:[“🪵”,“📏”], doa:[“🚪”,“🔑”], ie:[“🏠”,“🏡”,“🪟”], mado:[“🪟”,“🖼️”], oshiro:[“🏰”,“👑”],
+camp:[“🏕️”,“🔥”,“🪵”], yakizakana:[“🐟”,“🍽️”], medama:[“🍳”,“🥚”], gochisou:[“🍱”,“🍽️”,“🎉”],
+dragon:[“🐉”,“🐲”,“🔥”], beam:[“⚡”,“💥”,“✨”], robot:[“🤖”,“⚙️”], mecha:[“🤖”,“⚔️”],
+magicpick:[“⛏️”,“✨”], hero:[“🦸”,“🛡️”], ningyo:[“🧜”,“🐚”], yukiotoko:[“⛄”,“👣”],
+tatsumaki:[“🌪️”,“💨”], kowareie:[“🏚️”,“💥”]
+};
+const NAME_TAGS = [
+[[“だんご”,“もち”,“おだんご”],“🍡”], [[“ケーキ”],“🍰”], [[“パン”],“🍞”], [[“おにぎり”,“ごはん”],“🍙”],
+[[“あめ”,“キャンディ”,“おかし”],“🍬”], [[“ジュース”,“のみもの”],“🥤”], [[“アイス”],“🍦”],
+[[“スープ”,“しる”],“🍲”], [[“にく”],“🍖”], [[“くだもの”,“りんご”],“🍎”],
+[[“いぬ”],“🐕”], [[“ねこ”],“🐈”], [[“とり”],“🐦”], [[“むし”],“🐛”], [[“ちょう”],“🦋”],
+[[“かめ”],“🐢”], [[“うさぎ”],“🐰”], [[“くま”],“🐻”], [[“へび”],“🐍”], [[“かえる”],“🐸”],
+[[“はな”],“🌸”], [[“くも”],“☁️”], [[“ほし”],“⭐”], [[“つき”],“🌙”], [[“たいよう”],“☀️”],
+[[“にじ”],“🌈”], [[“かみなり”],“⚡”], [[“あめ”],“🌧️”], [[“かわ”],“🏞️”], [[“うちゅう”,“そら”],“🌌”],
+[[“くるま”],“🚗”], [[“でんしゃ”],“🚃”], [[“ふね”],“⛵”], [[“ロケット”],“🚀”], [[“ひこうき”],“✈️”],
+[[“じてんしゃ”],“🚲”],
+[[“いえ”,“おうち”],“🏠”], [[“しろ”,“おしろ”],“🏰”], [[“たから”,“ほうせき”],“💎”], [[“かぎ”],“🔑”],
+[[“ぼうし”],“🎩”], [[“くつ”],“👟”], [[“ふく”],“👕”], [[“ボール”],“⚽”], [[“おもちゃ”],“🧸”],
+[[“ほん”],“📖”], [[“えんぴつ”],“✏️”], [[“かがみ”],“🪞”], [[“はし”,“ブリッジ”],“🌉”],
+[[“ロボット”],“🤖”], [[“かいじゅう”],“🦖”], [[“ドラゴン”,“りゅう”],“🐉”], [[“まほう”],“🔮”],
+[[“けん”,“つるぎ”],“⚔️”], [[“たて”],“🛡️”], [[“おばけ”,“ゆうれい”],“👻”], [[“ヒーロー”],“🦸”],
+[[“ゆき”],“❄️”], [[“こおり”],“🧊”], [[“みず”],“💧”], [[“ひ”,“ほのお”],“🔥”], [[“つち”],“🟫”],
+[[“いし”],“🪨”], [[“どろ”],“🟤”], [[“すな”],“🏜️”], [[“かぜ”],“💨”], [[“たまご”],“🥚”],
+[[“やま”],“⛰️”], [[“うみ”],“🌊”], [[“き”,“もり”],“🌳”], [[“はこ”],“📦”], [[“おかね”],“🪙”]
+];
+function emojiSuggestions(pr){
+const out = [];
+const push = e => { if(e && out.indexOf(e) < 0) out.push(e); };
+const name = (pr.name || “”);
+NAME_TAGS.forEach(([ws, e]) => { if(ws.some(w => name.indexOf(w) >= 0)) push(e); });
+(ITEM_EMOJI[pr.a] || []).forEach(push);
+(ITEM_EMOJI[pr.b] || []).forEach(push);
+[“✨”,“⭐”,“🔮”,“🧩”,“🎁”,“🟣”,“🟠”,“🔵”].forEach(push);
+return out.slice(0, 15);
+}
+
+/* ================= 提案のレビュー（おとな） ================= */
+let emojiPick = {};
+let propEdit = {};   /* i -> {d:表示文, v:読み上げ文, c:ぶんるい} */
+function renderProps(){
+const el = $(“propList”);
+if(!proposals.length){
+el.innerHTML = ‘<div style="padding:10px 0;font-size:13px;color:#8ea3b8">まだ ていあんは ありません。</div>’;
+return;
+}
+el.innerHTML = proposals.map((pr,i)=>{
+const pick = emojiPick[i] !== undefined ? emojiPick[i] : “”;
+const choices = [””].concat(emojiSuggestions(pr));
+const ed = propEdit[i] || (propEdit[i] = {d: pr.why || “”, v: “”, c: “real”});
+return `<div class="prop">
+<div class="pt">${ITEMS[pr.a].n} ＋ ${ITEMS[pr.b].n} → ${pr.name}</div>
+<div class="pr">${pr.why ? “こどもの りゆう：” + pr.why : “<i>りゆうは 入力されていません</i>”}</div>
+
+```
+  <div class="fl">こどもに 見せる せつめい（ひらがなで）</div>
+  <textarea class="pfld" data-ed="d" data-i="${i}" rows="2"
+    placeholder="れい：どろを まるめて かためると、どろだんごに なるよ。">${ed.d}</textarea>
+
+  <div class="fl">読み上げ用（漢字まじり・省略可）</div>
+  <textarea class="pfld" data-ed="v" data-i="${i}" rows="2"
+    placeholder="れい：泥を丸めて固めると、泥だんごになるよ。">${ed.v}</textarea>
+
+  <div class="fl">この せつめいの あつかい</div>
+  <div class="cls" data-pc="${i}">
+    ${["real","lik","fic"].map(c=>`<button data-c="${c}" class="${c===ed.c?"on":""}">${CLS_LABEL[c]}</button>`).join("")}
+  </div>
+
+  <div class="fl">えを えらぶ（ぴったりの えが なければ「なし」で）</div>
+  <div class="emo" data-i="${i}">${choices.map(e=>
+    `<button data-e="${e}" class="${e===pick?"pick":""} ${e?"":"noemo"}">${e || "なし"}</button>`).join("")}</div>
+  <div style="display:flex;gap:8px">
+    <button class="btn danger" data-rej="${i}" style="padding:7px">やめる</button>
+    <button class="btn hint" data-app="${i}" style="padding:7px">レシピに する</button>
+  </div>
+</div>`;
+```
+
+}).join(””);
+}
+$(“propList”).addEventListener(“input”, e=>{
+const t = e.target.closest(”[data-ed]”);
+if(!t) return;
+const i = t.dataset.i;
+if(!propEdit[i]) propEdit[i] = {d:””, v:””, c:“real”};
+propEdit[i][t.dataset.ed] = t.value;
+});
+
+$(“propList”).addEventListener(“click”, e=>{
+const pc = e.target.closest(”.cls[data-pc] button”);
+if(pc){
+const i = pc.parentElement.dataset.pc;
+if(!propEdit[i]) propEdit[i] = {d:””, v:””, c:“real”};
+propEdit[i].c = pc.dataset.c;
+renderProps();
+return;
+}
+const em = e.target.closest(”.emo button”);
+if(em){ emojiPick[em.parentElement.dataset.i] = em.dataset.e; renderProps(); return; }
+
+const rej = e.target.closest(”[data-rej]”);
+if(rej){
+const idx = +rej.dataset.rej;
+askConfirm(“この ていあん「” + proposals[idx].name + “」を 削除しますか？”, ()=>{
+proposals.splice(idx,1); emojiPick={}; save(); renderProps(); updatePropBadge();
+toast(“削除しました”);
+}, “削除する”);
+return;
+}
+
+const app = e.target.closest(”[data-app]”);
+if(app){
+const i = +app.dataset.app, pr = proposals[i];
+const key = [pr.a, pr.b].sort().join(”|”);
+if(recipeMap[key]){ toast(“この くみあわせには すでに レシピが あります”); return; }
+const ed = propEdit[i] || {d:””, v:””, c:“real”};
+const disp = (ed.d || “”).trim() || pr.why || (pr.name + “が できるよ。”);
+const voice = (ed.v || “”).trim() || disp.replace(/ /g, “”);
+const id = “mine_” + Date.now().toString(36);
+customItems[id] = {n:pr.name, s:pr.name, k:pr.name, e:(emojiPick[i] !== undefined ? emojiPick[i] : “”)};
+customRecipes.push({a:pr.a, b:pr.b, id, why:disp, voice, cls:ed.c || “real”});
+if(ed.c && ed.c !== “real”) classOverride[key] = ed.c;
+proposals.splice(i,1); emojiPick={}; propEdit={};
+mergeCustom(); save(); renderProps(); updatePropBadge(); renderAll();
+toast(”「” + pr.name + “」を レシピに 追加しました”);
+return;
+}
+});
+$(“propBtn”).addEventListener(“click”, ()=>{
+const el = $(“propList”);
+if(el.style.display !== “none”){ el.style.display=“none”; $(“propBtn”).textContent=“ひらく”; return; }
+renderProps(); el.style.display=“block”; $(“propBtn”).textContent=“とじる”;
+});
+
+function renderAll(){
+renderGoals(); renderGrid(); renderSlot(0); renderSlot(1); renderResult(null);
+$(“swSpeak”).classList.toggle(“on”,opts.speak);
+$(“swBreak”).classList.toggle(“on”,opts.breaks);
+$(“swKey”).classList.toggle(“on”,opts.keySound !== false);
+$(“swGlow”).classList.toggle(“on”,opts.glow !== false);
+}
+
+/* –– ホーム画面用の アイコンと マニフェスト を その場で つくる –– */
+(function setupApp(){
+try{
+const draw = size => {
+const c = document.createElement(“canvas”);
+c.width = c.height = size;
+const g = c.getContext(“2d”);
+g.fillStyle = “#17202b”; g.fillRect(0,0,size,size);
+g.fillStyle = “#33475c”;
+const u = size/8;
+[[1,4],[3,3],[5,4],[2,6],[4,6]].forEach(([x,y])=>{
+g.fillRect(x*u, y*u, u*1.7, u*1.7);
+});
+g.fillStyle = “#ffab3d”;
+g.beginPath(); g.arc(size*0.5, size*0.33, size*0.11, 0, Math.PI*2); g.fill();
+return c.toDataURL(“image/png”);
+};
+const i192 = draw(192), i512 = draw(512);
+document.getElementById(“ati”).href = i192;
+const mf = {
+name:“ブロックのラボ”, short_name:“ラボ”, start_url:”.”, scope:”.”,
+display:“standalone”, orientation:“portrait”,
+background_color:”#17202b”, theme_color:”#17202b”,
+icons:[{src:i192, sizes:“192x192”, type:“image/png”},
+{src:i512, sizes:“512x512”, type:“image/png”}]
+};
+document.getElementById(“mf”).href =
+URL.createObjectURL(new Blob([JSON.stringify(mf)], {type:“application/manifest+json”}));
+}catch(e){}
+})();
+
+load();
+loadPhotos();
+mergeCustom();
+updatePropBadge();
+renderAll();
+</script>
+
+</body>
+</html>
