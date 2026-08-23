@@ -6,19 +6,19 @@
 <title>がんばりスタンプラリー</title>
 <style>
   :root {
-    --kaiju-bg-deep: #0b2620;
-    --kaiju-bg-mid: #123a30;
-    --kaiju-glow: #8fd14f;
-    --kaiju-ember: #e4572e;
-    --kaiju-cream: #f2f0e4;
-    --kaiju-line: #2f5233;
+    --kaiju-bg-deep: #0e4a36;
+    --kaiju-bg-mid: #146149;
+    --kaiju-glow: #baff29;
+    --kaiju-ember: #ff7a3c;
+    --kaiju-cream: #fffbe8;
+    --kaiju-line: #2f8f63;
 
-    --hero-bg-deep: #101317;
-    --hero-bg-mid: #1c2128;
-    --hero-chrome: #c9ced6;
-    --hero-red: #d62839;
-    --hero-blue: #1b98e0;
-    --hero-gold: #f4b400;
+    --hero-bg-deep: #1a1533;
+    --hero-bg-mid: #2b2154;
+    --hero-chrome: #eef1ff;
+    --hero-red: #ff3b5c;
+    --hero-blue: #29c5ff;
+    --hero-gold: #ffd23f;
 
     --bg: var(--kaiju-bg-deep);
     --bg-mid: var(--kaiju-bg-mid);
@@ -39,6 +39,7 @@
     color: var(--ink);
     transition: background 0.5s ease;
     overscroll-behavior: none;
+    overflow-x: hidden;
   }
 
   body.theme-jinan {
@@ -47,10 +48,43 @@
     --accent: var(--hero-red);
     --accent2: var(--hero-blue);
     --ink: var(--hero-chrome);
-    --line: #383f47;
+    --line: #4a3f7a;
+  }
+
+  body {
+    position: relative;
+  }
+  body::before, body::after {
+    content: "";
+    position: fixed;
+    width: 340px;
+    height: 340px;
+    border-radius: 50%;
+    filter: blur(60px);
+    opacity: 0.28;
+    z-index: 0;
+    pointer-events: none;
+    animation: drift 14s ease-in-out infinite alternate;
+  }
+  body::before {
+    background: var(--accent);
+    top: -120px;
+    left: -100px;
+  }
+  body::after {
+    background: var(--accent2);
+    bottom: -140px;
+    right: -100px;
+    animation-delay: -6s;
+  }
+  @keyframes drift {
+    from { transform: translate(0, 0) scale(1); }
+    to { transform: translate(30px, 40px) scale(1.15); }
   }
 
   #app {
+    position: relative;
+    z-index: 1;
     max-width: 640px;
     margin: 0 auto;
     padding: 18px 16px 60px;
@@ -65,71 +99,131 @@
   }
   .tab-btn {
     flex: 1;
-    padding: 12px 8px;
-    border-radius: 14px;
+    padding: 13px 8px;
+    border-radius: 16px;
     border: 2px solid var(--line);
     background: var(--bg-mid);
     color: var(--ink);
     font-size: 14px;
-    font-weight: 700;
+    font-weight: 800;
     letter-spacing: 0.02em;
     cursor: pointer;
     opacity: 0.55;
-    transition: all 0.25s ease;
+    transition: all 0.25s cubic-bezier(.3,1.4,.5,1);
   }
   .tab-btn.active {
     opacity: 1;
     border-color: var(--accent);
-    box-shadow: 0 0 0 1px var(--accent) inset, 0 6px 16px -8px var(--accent);
-    transform: translateY(-1px);
+    box-shadow: 0 0 0 2px var(--accent) inset, 0 8px 20px -8px var(--accent);
+    transform: translateY(-2px) scale(1.03);
   }
+  .tab-btn:active { transform: scale(0.96); }
 
   /* ---------- header ---------- */
   .theme-header {
     text-align: center;
-    margin-bottom: 22px;
+    margin-bottom: 18px;
   }
   .theme-eyebrow {
     font-size: 11px;
     letter-spacing: 0.3em;
     text-transform: uppercase;
     color: var(--accent);
-    opacity: 0.85;
+    opacity: 0.9;
     margin: 0 0 6px;
+    font-weight: 700;
   }
   .theme-title {
-    font-size: 28px;
+    font-size: 32px;
     font-weight: 900;
-    margin: 0 0 10px;
+    margin: 0 0 6px;
     line-height: 1.25;
+    text-shadow: 0 0 18px color-mix(in srgb, var(--accent) 55%, transparent), 0 3px 0 rgba(0,0,0,0.25);
+    animation: titlepulse 3.5s ease-in-out infinite;
   }
-  .theme-jinan .theme-title { letter-spacing: 0.04em; }
+  @keyframes titlepulse {
+    0%, 100% { transform: scale(1); }
+    50% { transform: scale(1.02); }
+  }
+  .theme-sub {
+    font-size: 13px;
+    opacity: 0.8;
+    margin: 0 0 14px;
+  }
 
   .progress-count {
     font-size: 15px;
-    font-weight: 700;
+    font-weight: 800;
     color: var(--ink);
-    opacity: 0.9;
+    opacity: 0.95;
   }
   .progress-count b {
-    font-size: 22px;
+    font-size: 26px;
     color: var(--accent);
   }
 
   .progress-track {
-    height: 8px;
-    border-radius: 6px;
+    height: 12px;
+    border-radius: 8px;
     background: var(--bg-mid);
     border: 1px solid var(--line);
     overflow: hidden;
     margin: 10px auto 0;
-    max-width: 320px;
+    max-width: 340px;
+    box-shadow: inset 0 2px 4px rgba(0,0,0,0.3);
   }
   .progress-fill {
     height: 100%;
     width: 0%;
     background: linear-gradient(90deg, var(--accent2), var(--accent));
+    background-size: 200% 100%;
+    animation: shimmer 2.2s linear infinite;
     transition: width 0.6s cubic-bezier(.2,.9,.3,1.2);
+  }
+  @keyframes shimmer {
+    0% { background-position: 0% 0; }
+    100% { background-position: -200% 0; }
+  }
+
+  /* ---------- stamp picker ---------- */
+  .picker-wrap {
+    margin: 20px 0 16px;
+    text-align: center;
+  }
+  .picker-label {
+    font-size: 14px;
+    font-weight: 800;
+    margin: 0 0 10px;
+    color: var(--ink);
+  }
+  .picker-grid {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 10px;
+    justify-content: center;
+  }
+  .stamp-choice {
+    width: 96px;
+    height: 96px;
+    border-radius: 24px;
+    border: 3px solid var(--line);
+    background: var(--bg-mid);
+    font-size: 56px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    transition: transform 0.18s cubic-bezier(.3,1.6,.5,1), border-color 0.18s ease, box-shadow 0.18s ease;
+  }
+  .stamp-choice:hover { transform: translateY(-3px) scale(1.06); }
+  .stamp-choice:active { transform: scale(0.9); }
+  .stamp-choice.selected-flash {
+    border-color: var(--accent);
+    box-shadow: 0 0 0 3px color-mix(in srgb, var(--accent) 40%, transparent), 0 10px 20px -8px var(--accent);
+  }
+  .stamp-choice:disabled {
+    opacity: 0.3;
+    cursor: not-allowed;
   }
 
   /* ---------- board ---------- */
@@ -138,68 +232,80 @@
     grid-template-columns: repeat(5, 1fr);
     gap: 10px;
     padding: 16px;
-    border-radius: 20px;
+    border-radius: 22px;
     background: var(--bg-mid);
-    border: 1px solid var(--line);
+    border: 2px solid var(--line);
     position: relative;
-  }
-  body:not(.theme-jinan) .board::before {
-    content: "";
-    position: absolute;
-    inset: 0;
-    border-radius: 20px;
-    background: repeating-linear-gradient(
-      transparent, transparent 26px, rgba(143,209,79,0.04) 27px
-    );
-    pointer-events: none;
+    box-shadow: 0 10px 30px -14px rgba(0,0,0,0.6);
   }
 
   .cell {
     aspect-ratio: 1;
-    border-radius: 14px;
+    border-radius: 16px;
     background: var(--bg);
-    border: 1.5px dashed var(--line);
+    border: 2px dashed var(--line);
     display: flex;
     align-items: center;
     justify-content: center;
     position: relative;
+    font-size: 46px;
     transition: transform 0.25s ease, background 0.25s ease, border-color 0.25s ease;
   }
   .cell .num {
-    font-size: 11px;
-    font-weight: 700;
+    font-size: 12px;
+    font-weight: 800;
     color: var(--ink);
     opacity: 0.4;
   }
   .cell.milestone {
-    grid-column: span 1;
-  }
-  .cell.milestone .num { font-size: 12px; }
-  .cell.milestone {
     border-style: solid;
-    border-width: 2px;
+    border-width: 3px;
   }
+  .cell.milestone .num { font-size: 13px; }
 
   .cell.filled {
     border-style: solid;
     border-color: var(--accent);
-    background: radial-gradient(circle at 30% 25%, color-mix(in srgb, var(--accent) 35%, var(--bg)), var(--bg));
+    background: radial-gradient(circle at 30% 25%, color-mix(in srgb, var(--accent) 40%, var(--bg)), var(--bg));
+    box-shadow: 0 0 14px -2px var(--accent);
+    cursor: pointer;
   }
-  .cell.filled .num { opacity: 0; }
+  .cell.filled:active {
+    transform: scale(0.9);
+  }
+  .board-hint {
+    text-align: center;
+    font-size: 11px;
+    opacity: 0.55;
+    margin: 10px 0 0;
+  }
   .cell.just-filled {
-    animation: pop 0.5s ease;
+    animation: pop 0.55s cubic-bezier(.3,1.8,.4,1);
   }
   @keyframes pop {
-    0% { transform: scale(0.6) rotate(-8deg); }
-    55% { transform: scale(1.18) rotate(4deg); }
+    0% { transform: scale(0.4) rotate(-15deg); }
+    55% { transform: scale(1.25) rotate(6deg); }
     100% { transform: scale(1) rotate(0deg); }
   }
 
-  .stamp-icon { width: 62%; height: 62%; }
+  /* ---------- confetti ---------- */
+  .confetti-piece {
+    position: fixed;
+    top: 0; left: 0;
+    width: 8px; height: 8px;
+    border-radius: 2px;
+    pointer-events: none;
+    z-index: 80;
+    animation: confetti-fly 0.9s ease-out forwards;
+  }
+  @keyframes confetti-fly {
+    0% { transform: translate(0,0) rotate(0deg); opacity: 1; }
+    100% { transform: var(--fly); opacity: 0; }
+  }
 
   /* ---------- parent panel ---------- */
   .parent-panel {
-    margin-top: 26px;
+    margin-top: 28px;
     border-top: 1px solid var(--line);
     padding-top: 14px;
   }
@@ -208,7 +314,7 @@
     background: none;
     border: none;
     color: var(--ink);
-    opacity: 0.6;
+    opacity: 0.55;
     font-size: 13px;
     padding: 8px 0;
     cursor: pointer;
@@ -230,14 +336,13 @@
     padding: 12px 10px;
     border-radius: 12px;
     border: none;
-    font-weight: 700;
+    font-weight: 800;
     font-size: 14px;
     cursor: pointer;
     transition: transform 0.15s ease, opacity 0.15s ease;
   }
   .p-btn:active { transform: scale(0.96); }
-  .p-btn.primary { background: var(--accent); color: var(--bg-deep, #111); }
-  .p-btn.primary { color: #101317; }
+  .p-btn.primary { background: var(--accent); color: #16181c; }
   .p-btn.secondary {
     background: transparent;
     border: 1.5px solid var(--line);
@@ -273,32 +378,88 @@
   #celebration-overlay {
     position: fixed;
     inset: 0;
-    background: rgba(0,0,0,0.72);
+    background: rgba(0,0,0,0.75);
     display: flex;
     align-items: center;
     justify-content: center;
     z-index: 50;
     padding: 20px;
   }
+  #celebration-overlay[hidden],
+  #parent-controls[hidden],
+  #confirm-modal[hidden] {
+    display: none !important;
+  }
+  #confirm-modal {
+    position: fixed;
+    inset: 0;
+    background: rgba(0,0,0,0.75);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 60;
+    padding: 20px;
+  }
+  .confirm-card { padding: 28px 24px; }
+  .confirm-message {
+    font-size: 16px;
+    font-weight: 700;
+    line-height: 1.6;
+    margin: 0 0 20px;
+  }
+
+  .date-field {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    margin-bottom: 12px;
+  }
+  .date-field label {
+    font-size: 12px;
+    opacity: 0.75;
+    font-weight: 700;
+  }
+  .date-field input[type="date"] {
+    padding: 8px 10px;
+    border-radius: 10px;
+    border: 1px solid var(--line);
+    background: var(--bg-mid);
+    color: var(--ink);
+    font-size: 14px;
+  }
   .celebrate-card {
     background: var(--bg-mid);
-    border: 2px solid var(--accent);
-    border-radius: 22px;
-    padding: 32px 24px;
+    border: 3px solid var(--accent);
+    border-radius: 26px;
+    padding: 36px 26px;
     max-width: 360px;
     text-align: center;
-    box-shadow: 0 0 60px -10px var(--accent);
+    box-shadow: 0 0 70px -6px var(--accent);
+    animation: cardpop 0.5s cubic-bezier(.3,1.6,.4,1);
   }
-  .celebrate-card .big-emoji { font-size: 52px; margin-bottom: 6px; }
+  @keyframes cardpop {
+    0% { transform: scale(0.6) rotate(-4deg); opacity: 0; }
+    100% { transform: scale(1) rotate(0deg); opacity: 1; }
+  }
+  .celebrate-card .big-emoji {
+    font-size: 58px;
+    margin-bottom: 6px;
+    animation: bounce 1s ease-in-out infinite;
+  }
+  @keyframes bounce {
+    0%, 100% { transform: translateY(0); }
+    50% { transform: translateY(-12px); }
+  }
   .celebrate-card h2 {
-    font-size: 22px;
+    font-size: 23px;
     margin: 4px 0 10px;
   }
   .celebrate-card .reward-text {
-    font-size: 18px;
+    font-size: 19px;
     font-weight: 800;
     color: var(--accent);
-    margin: 10px 0 22px;
+    margin: 10px 0 24px;
     line-height: 1.5;
   }
   .celebrate-card .p-btn { width: 100%; }
@@ -312,25 +473,36 @@
 <div id="app">
 
   <div class="top-tabs">
-    <button class="tab-btn" id="tab-chonan" data-child="chonan">🦖 長男：怪獣クエスト</button>
-    <button class="tab-btn" id="tab-jinan" data-child="jinan">🦸 次男：ヒーローチャレンジ</button>
+    <button class="tab-btn" id="tab-chonan" data-child="chonan">🦖 ニル：怪獣クエスト</button>
+    <button class="tab-btn" id="tab-jinan" data-child="jinan">🦸 エンゾ：ヒーローチャレンジ</button>
   </div>
 
   <div class="theme-header">
     <p class="theme-eyebrow" id="eyebrow"></p>
     <h1 class="theme-title" id="title"></h1>
+    <p class="theme-sub" id="subtitle"></p>
     <div class="progress-count"><b id="count-num">0</b> / 30 スタンプ</div>
     <div class="progress-track"><div class="progress-fill" id="progress-fill"></div></div>
   </div>
 
+  <div class="picker-wrap">
+    <div class="date-field">
+      <label for="stamp-date">日付</label>
+      <input type="date" id="stamp-date">
+    </div>
+    <p class="picker-label">すきなスタンプをえらんでペタッ！</p>
+    <div class="picker-grid" id="picker-grid"></div>
+  </div>
+
   <div class="board" id="board"></div>
+  <p class="board-hint">まちがえたスタンプはタップすると消せます</p>
 
   <div class="parent-panel">
     <button id="toggle-parent">保護者メニュー ▼</button>
     <div id="parent-controls" hidden>
       <div class="btn-row">
-        <button class="p-btn primary" id="add-stamp">スタンプを1つ追加</button>
         <button class="p-btn secondary" id="undo-stamp">1つ取り消す</button>
+        <button class="p-btn secondary" id="reset-board">リセット</button>
       </div>
       <div class="field">
         <label for="reward-input">30個たまったときのごほうび</label>
@@ -340,7 +512,6 @@
         <span>これまでにクリアした回数</span>
         <span id="rounds-count">0 回</span>
       </div>
-      <button class="p-btn secondary" id="reset-board">この頑張り表をリセットする</button>
     </div>
   </div>
 
@@ -355,56 +526,93 @@
   </div>
 </div>
 
+<div id="confirm-modal" hidden>
+  <div class="celebrate-card confirm-card">
+    <p id="confirm-message" class="confirm-message"></p>
+    <div class="btn-row">
+      <button class="p-btn secondary" id="confirm-cancel">キャンセル</button>
+      <button class="p-btn primary" id="confirm-ok">けす</button>
+    </div>
+  </div>
+</div>
+
 <script>
 (function () {
   const STORAGE_KEY = "ganbariHyouData_v1";
   const GOAL = 30;
 
+  const STAMP_SETS = {
+    chonan: [
+      { id: "squid",   emoji: "🦑" },
+      { id: "scorpion", emoji: "🦂" },
+      { id: "twister", emoji: "🌪️" },
+      { id: "boulder", emoji: "🪨" },
+      { id: "bone",    emoji: "🦴" },
+      { id: "meteor",  emoji: "☄️" },
+      { id: "shell",   emoji: "🐚" },
+      { id: "mist",    emoji: "🌫️" },
+      { id: "web",     emoji: "🕸️" },
+      { id: "worm",    emoji: "🪱" },
+    ],
+    jinan: [
+      { id: "bike",     emoji: "🏍️" },
+      { id: "herioface", emoji: "🦸" },
+      { id: "trident",  emoji: "🔱" },
+      { id: "swords",   emoji: "⚔️" },
+      { id: "crown",    emoji: "👑" },
+      { id: "eagle",    emoji: "🦅" },
+      { id: "wolf",     emoji: "🐺" },
+      { id: "shield",   emoji: "🛡️" },
+      { id: "bolt",     emoji: "⚡" },
+      { id: "fire",     emoji: "🔥" },
+    ],
+  };
+
+  const CONFETTI_COLORS = {
+    chonan: ["#baff29", "#ff7a3c", "#fffbe8", "#2f8f63"],
+    jinan: ["#ff3b5c", "#29c5ff", "#ffd23f", "#eef1ff"],
+  };
+
   const THEMES = {
     chonan: {
       bodyClass: "theme-chonan",
       eyebrow: "GODZILLA THEME · かいじゅうクエスト",
-      title: "長男の怪獣クエスト",
+      title: "ニルの怪獣クエスト",
+      subtitle: "がんばったら、すきなスタンプをペタッとはろう！",
       defaultReward: "とっておきのおかしを1つえらべる",
       celebrateHeading: "街を守りきった！クエストクリア！",
       celebrateEmoji: "🌋",
-      icon: kaijuIcon,
     },
     jinan: {
       bodyClass: "theme-jinan",
       eyebrow: "HERO THEME · ヘンシンチャレンジ",
-      title: "次男のヒーローチャレンジ",
+      title: "エンゾのヒーローチャレンジ",
+      subtitle: "がんばったら、すきなスタンプをペタッとはろう！",
       defaultReward: "ヒーローグッズを1つえらべる",
       celebrateHeading: "変身完了！ミッションクリア！",
       celebrateEmoji: "⚡",
-      icon: heroIcon,
     },
   };
-
-  function kaijuIcon() {
-    return `<svg class="stamp-icon" viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg">
-      <ellipse cx="50" cy="62" rx="26" ry="20" fill="var(--accent)"/>
-      <ellipse cx="30" cy="30" rx="11" ry="14" fill="var(--accent)"/>
-      <ellipse cx="50" cy="22" rx="12" ry="15" fill="var(--accent)"/>
-      <ellipse cx="70" cy="30" rx="11" ry="14" fill="var(--accent)"/>
-    </svg>`;
-  }
-
-  function heroIcon() {
-    return `<svg class="stamp-icon" viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg">
-      <polygon points="50,4 90,27 90,73 50,96 10,73 10,27" fill="none" stroke="var(--accent)" stroke-width="6"/>
-      <polygon points="50,26 72,39 72,61 50,74 28,61 28,39" fill="var(--accent)"/>
-    </svg>`;
-  }
 
   function loadData() {
     try {
       const raw = localStorage.getItem(STORAGE_KEY);
-      if (raw) return JSON.parse(raw);
+      if (raw) {
+        const parsed = JSON.parse(raw);
+        ["chonan", "jinan"].forEach((key) => {
+          if (!parsed[key]) {
+            parsed[key] = { stamps: 0, rounds: 0, reward: THEMES[key].defaultReward, types: [], dates: [] };
+          }
+          if (!Array.isArray(parsed[key].types)) parsed[key].types = [];
+          if (!Array.isArray(parsed[key].dates)) parsed[key].dates = [];
+          while (parsed[key].dates.length < parsed[key].types.length) parsed[key].dates.push("");
+        });
+        return parsed;
+      }
     } catch (e) {}
     return {
-      chonan: { stamps: 0, rounds: 0, reward: THEMES.chonan.defaultReward },
-      jinan: { stamps: 0, rounds: 0, reward: THEMES.jinan.defaultReward },
+      chonan: { stamps: 0, rounds: 0, reward: THEMES.chonan.defaultReward, types: [], dates: [] },
+      jinan: { stamps: 0, rounds: 0, reward: THEMES.jinan.defaultReward, types: [], dates: [] },
     };
   }
 
@@ -423,11 +631,17 @@
   const boardEl = document.getElementById("board");
   const eyebrowEl = document.getElementById("eyebrow");
   const titleEl = document.getElementById("title");
+  const subtitleEl = document.getElementById("subtitle");
   const countNumEl = document.getElementById("count-num");
   const progressFillEl = document.getElementById("progress-fill");
   const rewardInputEl = document.getElementById("reward-input");
   const roundsCountEl = document.getElementById("rounds-count");
-  const addBtn = document.getElementById("add-stamp");
+  const pickerGridEl = document.getElementById("picker-grid");
+  const dateInputEl = document.getElementById("stamp-date");
+  const confirmModal = document.getElementById("confirm-modal");
+  const confirmMessageEl = document.getElementById("confirm-message");
+  const confirmOkBtn = document.getElementById("confirm-ok");
+  const confirmCancelBtn = document.getElementById("confirm-cancel");
   const undoBtn = document.getElementById("undo-stamp");
   const resetBtn = document.getElementById("reset-board");
   const overlayEl = document.getElementById("celebration-overlay");
@@ -437,6 +651,40 @@
   const claimBtn = document.getElementById("claim-btn");
   const toggleParentBtn = document.getElementById("toggle-parent");
   const parentControls = document.getElementById("parent-controls");
+
+  function todayStr() {
+    const d = new Date();
+    const mm = String(d.getMonth() + 1).padStart(2, "0");
+    const dd = String(d.getDate()).padStart(2, "0");
+    return `${d.getFullYear()}-${mm}-${dd}`;
+  }
+
+  function formatDateJp(iso) {
+    if (!iso) return "日付なし";
+    const parts = iso.split("-");
+    if (parts.length !== 3) return iso;
+    return `${parts[0]}年${parseInt(parts[1],10)}月${parseInt(parts[2],10)}日`;
+  }
+
+  let pendingConfirmAction = null;
+
+  function showConfirm(message, onOk) {
+    confirmMessageEl.textContent = message;
+    pendingConfirmAction = onOk;
+    confirmModal.hidden = false;
+  }
+
+  function closeConfirm() {
+    confirmModal.hidden = true;
+    pendingConfirmAction = null;
+  }
+
+  confirmOkBtn.addEventListener("click", () => {
+    const action = pendingConfirmAction;
+    closeConfirm();
+    if (action) action();
+  });
+  confirmCancelBtn.addEventListener("click", closeConfirm);
 
   function buildBoard() {
     boardEl.innerHTML = "";
@@ -449,6 +697,36 @@
     }
   }
 
+  function buildPicker() {
+    pickerGridEl.innerHTML = "";
+    STAMP_SETS[currentChild].forEach((s) => {
+      const btn = document.createElement("button");
+      btn.className = "stamp-choice";
+      btn.dataset.type = s.id;
+      btn.textContent = s.emoji;
+      btn.addEventListener("click", (e) => onPickStamp(s, e.currentTarget));
+      pickerGridEl.appendChild(btn);
+    });
+  }
+
+  function spawnConfetti(x, y) {
+    const colors = CONFETTI_COLORS[currentChild];
+    for (let i = 0; i < 16; i++) {
+      const piece = document.createElement("div");
+      piece.className = "confetti-piece";
+      const angle = Math.random() * Math.PI * 2;
+      const dist = 60 + Math.random() * 90;
+      const dx = Math.cos(angle) * dist;
+      const dy = Math.sin(angle) * dist - 30;
+      piece.style.setProperty("--fly", `translate(${dx}px, ${dy}px) rotate(${Math.random()*360}deg)`);
+      piece.style.left = x + "px";
+      piece.style.top = y + "px";
+      piece.style.background = colors[i % colors.length];
+      document.body.appendChild(piece);
+      setTimeout(() => piece.remove(), 950);
+    }
+  }
+
   function render() {
     const theme = THEMES[currentChild];
     const state = data[currentChild];
@@ -456,6 +734,7 @@
     document.body.className = theme.bodyClass;
     eyebrowEl.textContent = theme.eyebrow;
     titleEl.textContent = theme.title;
+    subtitleEl.textContent = theme.subtitle;
     countNumEl.textContent = state.stamps;
     progressFillEl.style.width = Math.round((state.stamps / GOAL) * 100) + "%";
     roundsCountEl.textContent = state.rounds + " 回";
@@ -470,18 +749,15 @@
       const filled = n <= state.stamps;
       cell.classList.toggle("filled", filled);
       cell.classList.remove("just-filled");
+      const numSpan = cell.querySelector(".num");
       if (filled) {
-        if (cell.querySelector(".stamp-icon") === null) {
-          const span = cell.querySelector(".num");
-          if (span) span.remove();
-          cell.insertAdjacentHTML("beforeend", theme.icon());
-        }
+        const type = state.types[idx];
+        const stampDef = STAMP_SETS[currentChild].find((s) => s.id === type) || STAMP_SETS[currentChild][0];
+        cell.textContent = stampDef.emoji;
+        cell.title = formatDateJp(state.dates[idx]);
       } else {
-        const icon = cell.querySelector(".stamp-icon");
-        if (icon) icon.remove();
-        if (!cell.querySelector(".num")) {
-          cell.insertAdjacentHTML("beforeend", `<span class="num">${n}</span>`);
-        }
+        cell.innerHTML = `<span class="num">${n}</span>`;
+        cell.removeAttribute("title");
       }
     });
 
@@ -491,25 +767,42 @@
       lastFilledIndex = -1;
     }
 
+    const isFull = state.stamps >= GOAL;
+    pickerGridEl.querySelectorAll(".stamp-choice").forEach((btn) => {
+      btn.disabled = isFull;
+    });
     undoBtn.disabled = state.stamps <= 0;
-    addBtn.disabled = state.stamps >= GOAL;
   }
 
   function switchChild(child) {
     currentChild = child;
     buildBoard();
+    buildPicker();
     render();
   }
 
-  function addStamp() {
+  function onPickStamp(stampDef, btnEl) {
     const state = data[currentChild];
     if (state.stamps >= GOAL) return;
+
+    btnEl.classList.add("selected-flash");
+    setTimeout(() => btnEl.classList.remove("selected-flash"), 300);
+
+    state.types.push(stampDef.id);
+    state.dates.push(dateInputEl.value || todayStr());
     state.stamps += 1;
     lastFilledIndex = state.stamps;
     saveData();
     render();
+
+    const targetCell = boardEl.querySelector(`.cell[data-index="${state.stamps}"]`);
+    if (targetCell) {
+      const rect = targetCell.getBoundingClientRect();
+      spawnConfetti(rect.left + rect.width / 2, rect.top + rect.height / 2);
+    }
+
     if (state.stamps >= GOAL) {
-      setTimeout(showCelebration, 450);
+      setTimeout(showCelebration, 500);
     }
   }
 
@@ -517,17 +810,34 @@
     const state = data[currentChild];
     if (state.stamps <= 0) return;
     state.stamps -= 1;
+    state.types.pop();
+    state.dates.pop();
     saveData();
     render();
   }
 
+  function removeStampAt(cellIndex) {
+    const state = data[currentChild];
+    if (cellIndex < 1 || cellIndex > state.stamps) return;
+    const dateLabel = formatDateJp(state.dates[cellIndex - 1]);
+    showConfirm(`${dateLabel}のスタンプを消しますか？`, () => {
+      state.types.splice(cellIndex - 1, 1);
+      state.dates.splice(cellIndex - 1, 1);
+      state.stamps -= 1;
+      saveData();
+      render();
+    });
+  }
+
   function resetBoard() {
     const state = data[currentChild];
-    const ok = confirm("スタンプを0個に戻します。よろしいですか？（クリア回数は変わりません）");
-    if (!ok) return;
-    state.stamps = 0;
-    saveData();
-    render();
+    showConfirm("スタンプを0個に戻します。よろしいですか？（クリア回数は変わりません）", () => {
+      state.stamps = 0;
+      state.types = [];
+      state.dates = [];
+      saveData();
+      render();
+    });
   }
 
   function showCelebration() {
@@ -542,6 +852,8 @@
   function claimReward() {
     const state = data[currentChild];
     state.stamps = 0;
+    state.types = [];
+    state.dates = [];
     state.rounds += 1;
     saveData();
     overlayEl.hidden = true;
@@ -550,10 +862,15 @@
 
   document.getElementById("tab-chonan").addEventListener("click", () => switchChild("chonan"));
   document.getElementById("tab-jinan").addEventListener("click", () => switchChild("jinan"));
-  addBtn.addEventListener("click", addStamp);
   undoBtn.addEventListener("click", undoStamp);
   resetBtn.addEventListener("click", resetBoard);
   claimBtn.addEventListener("click", claimReward);
+
+  boardEl.addEventListener("click", (e) => {
+    const cell = e.target.closest(".cell.filled");
+    if (!cell) return;
+    removeStampAt(parseInt(cell.dataset.index, 10));
+  });
 
   toggleParentBtn.addEventListener("click", () => {
     const isHidden = parentControls.hidden;
@@ -567,6 +884,8 @@
   });
 
   buildBoard();
+  buildPicker();
+  dateInputEl.value = todayStr();
   render();
 })();
 </script>
