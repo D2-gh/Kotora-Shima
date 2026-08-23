@@ -28,6 +28,34 @@
     color: #a8a498; font-size: 10.5px; font-weight: 600; z-index: 5;
   }
 
+  /* ===== たからさがし ===== */
+  #huntBox{
+    background:#fff8e8;border:3px solid #e8c060;border-radius:16px;
+    padding:10px 12px;margin-bottom:12px;max-width:340px;width:92%;
+    box-shadow:0 3px 10px rgba(0,0,0,.08);
+  }
+  .huntTitle{font-size:13px;font-weight:800;color:#a87a20;margin-bottom:7px;text-align:center;}
+  .hintRow{
+    display:flex;align-items:center;gap:9px;width:100%;text-align:left;
+    background:#fff;border:2px solid #f0d8a0;border-radius:12px;
+    padding:9px 11px;margin-bottom:6px;font:inherit;cursor:pointer;
+  }
+  .hintRow:active{transform:scale(.98);}
+  .hintRow.main{border-color:#e8a83a;background:#fffdf5;}
+  .hintRow .hi{font-size:20px;flex-shrink:0;}
+  .hintRow .ht{font-size:14px;color:#3a3a34;font-weight:700;line-height:1.4;}
+  .hintRow .ht b{font-size:22px;color:#d97a2a;}
+  .huntNote{font-size:10.5px;color:#b09050;text-align:center;margin-top:2px;}
+  .digBig{font-size:64px;line-height:1.1;margin:6px 0;}
+  .digP{font-size:15px;font-weight:700;color:#3a3a34;margin:6px 0 0;line-height:1.5;}
+  .digHint{font-size:13px;font-weight:700;color:#a87a20;margin:10px 0 0;}
+  #digBtns .btn{
+    flex:1;background:#e8a83a;color:#fff;border:none;border-radius:14px;
+    padding:13px;font:inherit;font-size:15px;font-weight:800;cursor:pointer;
+  }
+  #digBtns .btn.ghost{background:#efece3;color:#7a7a6c;}
+  #digBtns .btn:active{transform:translateY(2px);}
+
   .card {
     background: #fff; border-radius: 22px;
     box-shadow: 0 8px 24px rgba(0,0,0,0.12);
@@ -143,6 +171,8 @@
     </div>
   </div>
 
+  <div id="huntBox" class="hidden"></div>
+
   <div id="map"></div>
 
   <div class="dpad">
@@ -183,6 +213,14 @@
 </div>
 
 <!-- ごほうびカード -->
+<div id="digOverlay" class="overlay hidden" style="z-index:22">
+  <div class="card pop" style="max-width:320px;text-align:center">
+    <div id="digTitle" style="font-size:17px;font-weight:800;color:#3a3a34;margin-bottom:10px;line-height:1.5"></div>
+    <div id="digBody"></div>
+    <div id="digBtns" style="display:flex;gap:8px;margin-top:16px"></div>
+  </div>
+</div>
+
 <div id="rewardOverlay" class="overlay hidden" style="z-index:20">
   <div class="card pop" style="background:linear-gradient(180deg,#fff9e8 0%,#fff 100%);border:3px solid #f0c060">
     <div style="font-size:44px;margin-bottom:8px">&#128142;&#10024;&#128142;</div>
@@ -233,7 +271,9 @@ const WORDS = [{"word": "りんご", "category": "たべもの", "emoji": "🍎"
 
 const PLAYABLE = WORDS.filter(w => !w.photoNeeded);
 const GRID = 8;
-const SPOT_COUNT = 5;
+let SPOT_COUNT = 5;
+/* なれてきたら しらべる ばしょを ふやす（5→7→9） */
+function spotCountFor(lv){ return [5,7,9][Math.min(2, Math.max(0,(lv||1)-1))]; }
 const GEM_GOAL = 10;
 
 const LEVELS = [
@@ -271,6 +311,9 @@ let store = {
   learned: {},          // 単語 -> であった回数
   days: [],             // あそんだ日（YYYY-MM-DD）
   islandsCleared: 0,
+  hunts: 0,             // たからばこを みつけた かず
+  finds: 0,             // ほって ひろった ものの かず
+  huntLevel: 1,         // おなじ 頭の音の 候補が いくつ あるか（1〜3）
 };
 
 function loadStore() {
@@ -428,6 +471,63 @@ let hlIndex = -1;
 let started = false;
 let readingTestWord = null;
 
+/* ========== たからさがし ==========
+   ヒントは つねに 1つだけ。いつでも 聞きなおせる。
+   おぼえておく 必要が ないように、画面に ずっと 出しておく。      */
+let hunt = null;   /* {key, head, hints:[], found:false, misses:0, extras:0} */
+let digs = {};     /* ほった ばしょ -> ひろった もの（からっぽには しない） */
+const DIG_FINDS = ["🐚","🪨","🌿","🪶","⭐","🍀","🐌","🌰"];
+
+const HEAD_YOMI = {  /* 濁点・半濁点・小文字は 親文字の 音で あつかう */
+  "が":"か","ぎ":"き","ぐ":"く","げ":"け","ご":"こ",
+  "ざ":"さ","じ":"し","ず":"す","ぜ":"せ","ぞ":"そ",
+  "だ":"た","ぢ":"ち","づ":"つ","で":"て","ど":"と",
+  "ば":"は","び":"ひ","ぶ":"ふ","べ":"へ","ぼ":"ほ",
+  "ぱ":"は","ぴ":"ひ","ぷ":"ふ","ぺ":"へ","ぽ":"ほ",
+  "ぁ":"あ","ぃ":"い","ぅ":"う","ぇ":"え","ぉ":"お"
+};
+function headOf(word){
+  const c = [...word][0];
+  return HEAD_YOMI[c] || c;
+}
+/* その場所の 位置から、ことばに たよらない ヒントを つくる */
+function placeHints(x,y){
+  const out = [];
+  const t = TERRAIN[island[y][x]];
+  if(t.emoji && t.name) out.push({icon:t.emoji, text:"「"+t.name+"」の ちかく", voice:t.name+"の近く"});
+  const half = GRID/2;
+  out.push(y < half ? {icon:"⬆️", text:"しまの うえの ほう", voice:"島の上の方"}
+                    : {icon:"⬇️", text:"しまの したの ほう", voice:"島の下の方"});
+  out.push(x < half ? {icon:"⬅️", text:"しまの ひだりの ほう", voice:"島の左の方"}
+                    : {icon:"➡️", text:"しまの みぎの ほう", voice:"島の右の方"});
+  return out;
+}
+/* 宝の場所を きめる。おなじ 頭の音が 何こ あるかで むずかしさが 決まる */
+function startHunt(){
+  hunt = null;
+  const keys = Object.keys(spots);
+  if(keys.length < 2) return;
+  /* 頭の音ごとに まとめる */
+  const byHead = {};
+  keys.forEach(k=>{ const h = headOf(spots[k].word); (byHead[h]=byHead[h]||[]).push(k); });
+  const heads = Object.keys(byHead);
+  /* レベルに応じて、候補の 数を えらぶ
+     やさしい＝候補1つ（ほぼ 確実に 当たる） / なれてきたら 2〜3つ */
+  const want = store.huntLevel || 1;
+  let pick = heads.filter(h => byHead[h].length === want);
+  if(!pick.length) pick = heads.filter(h => byHead[h].length <= want);
+  if(!pick.length) pick = heads;
+  const head = pick[Math.floor(Math.random()*pick.length)];
+  const cand = byHead[head];
+  const key = cand[Math.floor(Math.random()*cand.length)];
+  const [hx,hy] = key.split(",").map(Number);
+  hunt = { key, head, hints: placeHints(hx,hy), found:false, misses:0, extras:0 };
+  renderHunt();
+  setTimeout(()=>{
+    speak("たからばこが かくれているよ。"+head+"の おとで はじまる ものの ちかくだよ。", 0.85);
+  }, 700);
+}
+
 const $ = id => document.getElementById(id);
 
 // ---------- びょうが ----------
@@ -474,10 +574,34 @@ function renderMap(){
       if(info.emoji) inner += '<span style="opacity:.5">'+info.emoji+'</span>';
       if(spots[key] && !collected[key]) inner += '<span class="sparkle" style="position:absolute;font-size:16px">✨</span>';
       if(spots[key] && collected[key]) inner += '<span style="position:absolute;font-size:14px;opacity:.6">✅</span>';
+      if(hunt && hunt.found && hunt.key===key) inner += '<span style="position:absolute;font-size:20px">🎁</span>';
+      if(digs[key]) inner += '<span style="position:absolute;font-size:13px;opacity:.85;bottom:2px;right:3px">'+digs[key]+'</span>';
       d.innerHTML = inner;
     }
     map.appendChild(d);
   }
+}
+
+function renderHunt(){
+  const box = $("huntBox");
+  if(!box) return;
+  if(!hunt){ box.classList.add("hidden"); return; }
+  box.classList.remove("hidden");
+  if(hunt.found){
+    box.innerHTML = '<div class="huntTitle">🎉 たからばこを みつけた！</div>';
+    return;
+  }
+  /* ヒントは 出た ぶんだけ ならべる。消えないので おぼえなくていい */
+  let rows = '<button class="hintRow main" data-hint="head">'
+    + '<span class="hi">🔊</span><span class="ht">「<b>'+hunt.head+'</b>」の おとで はじまる ものの ちかく</span></button>';
+  for(let i=0;i<hunt.extras;i++){
+    const h = hunt.hints[i];
+    if(!h) continue;
+    rows += '<button class="hintRow" data-hint="'+i+'">'
+      + '<span class="hi">'+h.icon+'</span><span class="ht">'+h.text+'</span></button>';
+  }
+  box.innerHTML = '<div class="huntTitle">🗺 たからの ヒント</div>' + rows
+    + '<div class="huntNote">ヒントを おすと よみあげます</div>';
 }
 
 function renderStats(){
@@ -547,9 +671,10 @@ function revealAnswer(){
 }
 
 function collectWord(){
-  collected[active.key] = true;
+  const doneKey = active.key, doneWord = active.word;
+  collected[doneKey] = true;
   store.points += 10;
-  store.learned[active.word] = (store.learned[active.word]||0) + 1;
+  store.learned[doneWord] = (store.learned[doneWord]||0) + 1;
   store.gems += 1;
   let showReward = false;
   if(store.gems >= GEM_GOAL){ store.gems = 0; showReward = true; }
@@ -557,10 +682,80 @@ function collectWord(){
   $("wordOverlay").classList.add("hidden");
   active = null;
   renderMap(); renderStats();
+  /* あつめた ことばの 頭の音が ヒントと 合っていたら ほれる */
+  if(hunt && !hunt.found && !digs[doneKey]){
+    if(headOf(doneWord) === hunt.head){
+      setTimeout(()=>askDig(doneKey, doneWord), showReward?1400:450);
+      if(showReward) setTimeout(showRewardCard, 400);
+      return;
+    }
+  }
   if(showReward) setTimeout(showRewardCard, 400);
   // 島クリア判定
   const total=Object.keys(spots).length, got=Object.keys(collected).length;
   if(total>0 && got===total){ store.islandsCleared++; saveStore(); }
+}
+
+/* 頭の音が 合った場所に ついたら、ほるか きく */
+function askDig(key, word){
+  const ov = $("digOverlay");
+  $("digTitle").textContent = "「"+word+"」は 「"+hunt.head+"」の おと！";
+  $("digBody").innerHTML = '<div class="digBig">⛏</div>'
+    + '<p class="digP">ここを ほってみる？</p>';
+  $("digBtns").innerHTML =
+    '<button class="btn ghost" id="digNo">やめておく</button>'
+    + '<button class="btn" id="digYes">ほる！</button>';
+  ov.classList.remove("hidden");
+  speak(word+"は、"+hunt.head+"の音。ここを掘ってみる？", 0.9);
+  $("digNo").onclick = ()=>{ ov.classList.add("hidden"); };
+  $("digYes").onclick = ()=>doDig(key, word);
+}
+
+function doDig(key, word){
+  const ov = $("digOverlay");
+  if(hunt.key === key){
+    hunt.found = true;
+    store.points += 30;
+    store.hunts = (store.hunts||0) + 1;
+    /* 3回 見つけたら、つぎから 候補を 1つ ふやす（さいだい3） */
+    if(store.hunts % 3 === 0) store.huntLevel = Math.min(3, (store.huntLevel||1) + 1);
+    saveStore();
+    $("digTitle").textContent = "🎉 たからばこ はっけん！";
+    $("digBody").innerHTML = '<div class="digBig pop">🎁</div>'
+      + '<p class="digP">「'+word+'」の ところに あったよ！</p>';
+    $("digBtns").innerHTML = '<button class="btn" id="digOk">やったー！</button>';
+    speak("やったー！宝箱を見つけたよ！", 0.95);
+    $("digOk").onclick = ()=>{
+      ov.classList.add("hidden");
+      renderMap(); renderHunt(); renderStats();
+      if(store.photo) setTimeout(showRewardCard, 300);
+    };
+  }else{
+    hunt.misses++;
+    const find = DIG_FINDS[Math.floor(Math.random()*DIG_FINDS.length)];
+    digs[key] = find;
+    store.points += 5;
+    store.finds = (store.finds||0) + 1;
+    saveStore();
+    /* 2回 はずれたら ヒントを 1つ ふやす。自動なので 子どもは 何もしなくていい */
+    let added = false;
+    if(hunt.misses % 2 === 0 && hunt.extras < hunt.hints.length){ hunt.extras++; added = true; }
+    $("digTitle").textContent = "たからばこは なかったけど…";
+    $("digBody").innerHTML = '<div class="digBig pop">'+find+'</div>'
+      + '<p class="digP">'+find+' を みつけた！</p>'
+      + (added ? '<p class="digHint">🗺 あたらしい ヒントが ふえたよ</p>' : "");
+    $("digBtns").innerHTML = '<button class="btn" id="digOk">つぎを さがす</button>';
+    speak(find==="🐚"?"貝がらを見つけた！":"何か見つけた！"
+      + (added?" 新しいヒントが増えたよ。":""), 0.95);
+    $("digOk").onclick = ()=>{
+      ov.classList.add("hidden");
+      renderMap(); renderHunt(); renderStats();
+      if(added){
+        const h = hunt.hints[hunt.extras-1];
+        if(h) setTimeout(()=>speak("ヒント。"+h.voice+"だよ。", 0.85), 300);
+      }
+    };
+  }
 }
 
 function showRewardCard(){
@@ -574,6 +769,19 @@ function showRewardCard(){
   $("rewardOverlay").classList.remove("hidden");
 }
 
+/* ヒントは 何回でも 聞きなおせる（おぼえておかなくて いいように） */
+document.addEventListener("click", e=>{
+  const b = e.target.closest("[data-hint]");
+  if(!b || !hunt) return;
+  const v = b.dataset.hint;
+  if(v === "head"){
+    speak(hunt.head+"の音で はじまる ものの 近くだよ。", 0.85);
+  }else{
+    const h = hunt.hints[+v];
+    if(h) speak(h.voice+"だよ。", 0.85);
+  }
+});
+
 // ---------- うごき ----------
 function move(dx,dy){
   if(!started || active) return;
@@ -583,21 +791,29 @@ function move(dx,dy){
   pos={x:nx,y:ny};
   renderMap();
   const key = nx+","+ny;
-  if(spots[key] && !collected[key]) openWord(key, spots[key]);
+  if(spots[key] && !collected[key]){ openWord(key, spots[key]); return; }
+  /* もう あつめた ばしょでも、ヒントに あっていて まだ ほっていなければ ほれる */
+  if(spots[key] && collected[key] && hunt && !hunt.found && !digs[key]
+     && headOf(spots[key].word) === hunt.head){
+    setTimeout(()=>askDig(key, spots[key].word), 250);
+  }
 }
 
 function startIsland(){
+  SPOT_COUNT = spotCountFor(store.huntLevel);
   island = generateIsland();
   pos = findStart(island);
   spots = buildSpots(island, level);
   collected = {};
+  digs = {};
   active = null;
   started = true;
   markToday();
   $("startScreen").classList.add("hidden");
   $("gameScreen").classList.remove("hidden");
   $("clearBox").classList.add("hidden");
-  renderMap(); renderStats();
+  startHunt();
+  renderMap(); renderStats(); renderHunt();
 }
 
 // ---------- マイク ----------
@@ -731,6 +947,8 @@ function renderRecord(){
     "よんだ かいすう：" + totalTimes + "かい<br>" +
     "あそんだ 日：" + store.days.length + "日（れんぞく " + streakCount() + "日）<br>" +
     "クリアした しま：" + store.islandsCleared + "こ<br>" +
+    "みつけた たからばこ：" + (store.hunts||0) + "こ<br>" +
+    "たからさがしの むずかしさ：レベル " + (store.huntLevel||1) + " / 3<br>" +
     "ためた ポイント：" + store.points;
 }
 
@@ -829,7 +1047,7 @@ $("photoInput").onchange = async e => {
 
 $("resetBtn").onclick = ()=>{
   if(confirm("きろくを ぜんぶ けしますか？（ポイント・たからもの・ごほうび写真も けえます）")) {
-    store = { points:0, gems:0, photo:null, message:"", learned:{}, days:[], islandsCleared:0 };
+    store = { points:0, gems:0, photo:null, message:"", learned:{}, days:[], islandsCleared:0, hunts:0, finds:0, huntLevel:1 };
     saveStore();
     $("settingsPhotoPreview").classList.add("hidden");
     $("messageInput").value="";
