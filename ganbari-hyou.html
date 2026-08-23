@@ -1,0 +1,574 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>がんばりスタンプラリー</title>
+<style>
+  :root {
+    --kaiju-bg-deep: #0b2620;
+    --kaiju-bg-mid: #123a30;
+    --kaiju-glow: #8fd14f;
+    --kaiju-ember: #e4572e;
+    --kaiju-cream: #f2f0e4;
+    --kaiju-line: #2f5233;
+
+    --hero-bg-deep: #101317;
+    --hero-bg-mid: #1c2128;
+    --hero-chrome: #c9ced6;
+    --hero-red: #d62839;
+    --hero-blue: #1b98e0;
+    --hero-gold: #f4b400;
+
+    --bg: var(--kaiju-bg-deep);
+    --bg-mid: var(--kaiju-bg-mid);
+    --accent: var(--kaiju-glow);
+    --accent2: var(--kaiju-ember);
+    --ink: var(--kaiju-cream);
+    --line: var(--kaiju-line);
+  }
+
+  * { box-sizing: border-box; }
+
+  html, body {
+    margin: 0;
+    padding: 0;
+    min-height: 100%;
+    background: var(--bg);
+    font-family: "Hiragino Maru Gothic ProN", "Hiragino Sans", "Yu Gothic", sans-serif;
+    color: var(--ink);
+    transition: background 0.5s ease;
+    overscroll-behavior: none;
+  }
+
+  body.theme-jinan {
+    --bg: var(--hero-bg-deep);
+    --bg-mid: var(--hero-bg-mid);
+    --accent: var(--hero-red);
+    --accent2: var(--hero-blue);
+    --ink: var(--hero-chrome);
+    --line: #383f47;
+  }
+
+  #app {
+    max-width: 640px;
+    margin: 0 auto;
+    padding: 18px 16px 60px;
+    min-height: 100vh;
+  }
+
+  /* ---------- tabs ---------- */
+  .top-tabs {
+    display: flex;
+    gap: 8px;
+    margin-bottom: 20px;
+  }
+  .tab-btn {
+    flex: 1;
+    padding: 12px 8px;
+    border-radius: 14px;
+    border: 2px solid var(--line);
+    background: var(--bg-mid);
+    color: var(--ink);
+    font-size: 14px;
+    font-weight: 700;
+    letter-spacing: 0.02em;
+    cursor: pointer;
+    opacity: 0.55;
+    transition: all 0.25s ease;
+  }
+  .tab-btn.active {
+    opacity: 1;
+    border-color: var(--accent);
+    box-shadow: 0 0 0 1px var(--accent) inset, 0 6px 16px -8px var(--accent);
+    transform: translateY(-1px);
+  }
+
+  /* ---------- header ---------- */
+  .theme-header {
+    text-align: center;
+    margin-bottom: 22px;
+  }
+  .theme-eyebrow {
+    font-size: 11px;
+    letter-spacing: 0.3em;
+    text-transform: uppercase;
+    color: var(--accent);
+    opacity: 0.85;
+    margin: 0 0 6px;
+  }
+  .theme-title {
+    font-size: 28px;
+    font-weight: 900;
+    margin: 0 0 10px;
+    line-height: 1.25;
+  }
+  .theme-jinan .theme-title { letter-spacing: 0.04em; }
+
+  .progress-count {
+    font-size: 15px;
+    font-weight: 700;
+    color: var(--ink);
+    opacity: 0.9;
+  }
+  .progress-count b {
+    font-size: 22px;
+    color: var(--accent);
+  }
+
+  .progress-track {
+    height: 8px;
+    border-radius: 6px;
+    background: var(--bg-mid);
+    border: 1px solid var(--line);
+    overflow: hidden;
+    margin: 10px auto 0;
+    max-width: 320px;
+  }
+  .progress-fill {
+    height: 100%;
+    width: 0%;
+    background: linear-gradient(90deg, var(--accent2), var(--accent));
+    transition: width 0.6s cubic-bezier(.2,.9,.3,1.2);
+  }
+
+  /* ---------- board ---------- */
+  .board {
+    display: grid;
+    grid-template-columns: repeat(5, 1fr);
+    gap: 10px;
+    padding: 16px;
+    border-radius: 20px;
+    background: var(--bg-mid);
+    border: 1px solid var(--line);
+    position: relative;
+  }
+  body:not(.theme-jinan) .board::before {
+    content: "";
+    position: absolute;
+    inset: 0;
+    border-radius: 20px;
+    background: repeating-linear-gradient(
+      transparent, transparent 26px, rgba(143,209,79,0.04) 27px
+    );
+    pointer-events: none;
+  }
+
+  .cell {
+    aspect-ratio: 1;
+    border-radius: 14px;
+    background: var(--bg);
+    border: 1.5px dashed var(--line);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    position: relative;
+    transition: transform 0.25s ease, background 0.25s ease, border-color 0.25s ease;
+  }
+  .cell .num {
+    font-size: 11px;
+    font-weight: 700;
+    color: var(--ink);
+    opacity: 0.4;
+  }
+  .cell.milestone {
+    grid-column: span 1;
+  }
+  .cell.milestone .num { font-size: 12px; }
+  .cell.milestone {
+    border-style: solid;
+    border-width: 2px;
+  }
+
+  .cell.filled {
+    border-style: solid;
+    border-color: var(--accent);
+    background: radial-gradient(circle at 30% 25%, color-mix(in srgb, var(--accent) 35%, var(--bg)), var(--bg));
+  }
+  .cell.filled .num { opacity: 0; }
+  .cell.just-filled {
+    animation: pop 0.5s ease;
+  }
+  @keyframes pop {
+    0% { transform: scale(0.6) rotate(-8deg); }
+    55% { transform: scale(1.18) rotate(4deg); }
+    100% { transform: scale(1) rotate(0deg); }
+  }
+
+  .stamp-icon { width: 62%; height: 62%; }
+
+  /* ---------- parent panel ---------- */
+  .parent-panel {
+    margin-top: 26px;
+    border-top: 1px solid var(--line);
+    padding-top: 14px;
+  }
+  #toggle-parent {
+    width: 100%;
+    background: none;
+    border: none;
+    color: var(--ink);
+    opacity: 0.6;
+    font-size: 13px;
+    padding: 8px 0;
+    cursor: pointer;
+    text-align: center;
+  }
+  #parent-controls {
+    background: var(--bg-mid);
+    border: 1px solid var(--line);
+    border-radius: 16px;
+    padding: 16px;
+    margin-top: 8px;
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+  }
+  .btn-row { display: flex; gap: 10px; }
+  .p-btn {
+    flex: 1;
+    padding: 12px 10px;
+    border-radius: 12px;
+    border: none;
+    font-weight: 700;
+    font-size: 14px;
+    cursor: pointer;
+    transition: transform 0.15s ease, opacity 0.15s ease;
+  }
+  .p-btn:active { transform: scale(0.96); }
+  .p-btn.primary { background: var(--accent); color: var(--bg-deep, #111); }
+  .p-btn.primary { color: #101317; }
+  .p-btn.secondary {
+    background: transparent;
+    border: 1.5px solid var(--line);
+    color: var(--ink);
+  }
+  .p-btn:disabled { opacity: 0.35; cursor: not-allowed; }
+
+  .field label {
+    display: block;
+    font-size: 12px;
+    opacity: 0.7;
+    margin-bottom: 6px;
+  }
+  .field input {
+    width: 100%;
+    padding: 10px 12px;
+    border-radius: 10px;
+    border: 1px solid var(--line);
+    background: var(--bg);
+    color: var(--ink);
+    font-size: 14px;
+  }
+  .field input:focus { outline: 2px solid var(--accent); }
+
+  .stat-line {
+    font-size: 12px;
+    opacity: 0.75;
+    display: flex;
+    justify-content: space-between;
+  }
+
+  /* ---------- celebration overlay ---------- */
+  #celebration-overlay {
+    position: fixed;
+    inset: 0;
+    background: rgba(0,0,0,0.72);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 50;
+    padding: 20px;
+  }
+  .celebrate-card {
+    background: var(--bg-mid);
+    border: 2px solid var(--accent);
+    border-radius: 22px;
+    padding: 32px 24px;
+    max-width: 360px;
+    text-align: center;
+    box-shadow: 0 0 60px -10px var(--accent);
+  }
+  .celebrate-card .big-emoji { font-size: 52px; margin-bottom: 6px; }
+  .celebrate-card h2 {
+    font-size: 22px;
+    margin: 4px 0 10px;
+  }
+  .celebrate-card .reward-text {
+    font-size: 18px;
+    font-weight: 800;
+    color: var(--accent);
+    margin: 10px 0 22px;
+    line-height: 1.5;
+  }
+  .celebrate-card .p-btn { width: 100%; }
+
+  @media (prefers-reduced-motion: reduce) {
+    * { animation: none !important; transition: none !important; }
+  }
+</style>
+</head>
+<body class="theme-chonan">
+<div id="app">
+
+  <div class="top-tabs">
+    <button class="tab-btn" id="tab-chonan" data-child="chonan">🦖 長男：怪獣クエスト</button>
+    <button class="tab-btn" id="tab-jinan" data-child="jinan">🦸 次男：ヒーローチャレンジ</button>
+  </div>
+
+  <div class="theme-header">
+    <p class="theme-eyebrow" id="eyebrow"></p>
+    <h1 class="theme-title" id="title"></h1>
+    <div class="progress-count"><b id="count-num">0</b> / 30 スタンプ</div>
+    <div class="progress-track"><div class="progress-fill" id="progress-fill"></div></div>
+  </div>
+
+  <div class="board" id="board"></div>
+
+  <div class="parent-panel">
+    <button id="toggle-parent">保護者メニュー ▼</button>
+    <div id="parent-controls" hidden>
+      <div class="btn-row">
+        <button class="p-btn primary" id="add-stamp">スタンプを1つ追加</button>
+        <button class="p-btn secondary" id="undo-stamp">1つ取り消す</button>
+      </div>
+      <div class="field">
+        <label for="reward-input">30個たまったときのごほうび</label>
+        <input id="reward-input" type="text" maxlength="40" placeholder="例：おかしを1つえらべる">
+      </div>
+      <div class="stat-line">
+        <span>これまでにクリアした回数</span>
+        <span id="rounds-count">0 回</span>
+      </div>
+      <button class="p-btn secondary" id="reset-board">この頑張り表をリセットする</button>
+    </div>
+  </div>
+
+</div>
+
+<div id="celebration-overlay" hidden>
+  <div class="celebrate-card">
+    <div class="big-emoji" id="celebrate-emoji">🎉</div>
+    <h2 id="celebrate-heading">クエストクリア！</h2>
+    <div class="reward-text" id="celebrate-reward"></div>
+    <button class="p-btn primary" id="claim-btn">つぎのチャレンジへ！</button>
+  </div>
+</div>
+
+<script>
+(function () {
+  const STORAGE_KEY = "ganbariHyouData_v1";
+  const GOAL = 30;
+
+  const THEMES = {
+    chonan: {
+      bodyClass: "theme-chonan",
+      eyebrow: "GODZILLA THEME · かいじゅうクエスト",
+      title: "長男の怪獣クエスト",
+      defaultReward: "とっておきのおかしを1つえらべる",
+      celebrateHeading: "街を守りきった！クエストクリア！",
+      celebrateEmoji: "🌋",
+      icon: kaijuIcon,
+    },
+    jinan: {
+      bodyClass: "theme-jinan",
+      eyebrow: "HERO THEME · ヘンシンチャレンジ",
+      title: "次男のヒーローチャレンジ",
+      defaultReward: "ヒーローグッズを1つえらべる",
+      celebrateHeading: "変身完了！ミッションクリア！",
+      celebrateEmoji: "⚡",
+      icon: heroIcon,
+    },
+  };
+
+  function kaijuIcon() {
+    return `<svg class="stamp-icon" viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg">
+      <ellipse cx="50" cy="62" rx="26" ry="20" fill="var(--accent)"/>
+      <ellipse cx="30" cy="30" rx="11" ry="14" fill="var(--accent)"/>
+      <ellipse cx="50" cy="22" rx="12" ry="15" fill="var(--accent)"/>
+      <ellipse cx="70" cy="30" rx="11" ry="14" fill="var(--accent)"/>
+    </svg>`;
+  }
+
+  function heroIcon() {
+    return `<svg class="stamp-icon" viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg">
+      <polygon points="50,4 90,27 90,73 50,96 10,73 10,27" fill="none" stroke="var(--accent)" stroke-width="6"/>
+      <polygon points="50,26 72,39 72,61 50,74 28,61 28,39" fill="var(--accent)"/>
+    </svg>`;
+  }
+
+  function loadData() {
+    try {
+      const raw = localStorage.getItem(STORAGE_KEY);
+      if (raw) return JSON.parse(raw);
+    } catch (e) {}
+    return {
+      chonan: { stamps: 0, rounds: 0, reward: THEMES.chonan.defaultReward },
+      jinan: { stamps: 0, rounds: 0, reward: THEMES.jinan.defaultReward },
+    };
+  }
+
+  function saveData() {
+    try {
+      localStorage.setItem(STORAGE_KEY, JSON.stringify(data));
+    } catch (e) {
+      console.error("保存に失敗しました", e);
+    }
+  }
+
+  let data = loadData();
+  let currentChild = "chonan";
+  let lastFilledIndex = -1;
+
+  const boardEl = document.getElementById("board");
+  const eyebrowEl = document.getElementById("eyebrow");
+  const titleEl = document.getElementById("title");
+  const countNumEl = document.getElementById("count-num");
+  const progressFillEl = document.getElementById("progress-fill");
+  const rewardInputEl = document.getElementById("reward-input");
+  const roundsCountEl = document.getElementById("rounds-count");
+  const addBtn = document.getElementById("add-stamp");
+  const undoBtn = document.getElementById("undo-stamp");
+  const resetBtn = document.getElementById("reset-board");
+  const overlayEl = document.getElementById("celebration-overlay");
+  const celebrateHeadingEl = document.getElementById("celebrate-heading");
+  const celebrateRewardEl = document.getElementById("celebrate-reward");
+  const celebrateEmojiEl = document.getElementById("celebrate-emoji");
+  const claimBtn = document.getElementById("claim-btn");
+  const toggleParentBtn = document.getElementById("toggle-parent");
+  const parentControls = document.getElementById("parent-controls");
+
+  function buildBoard() {
+    boardEl.innerHTML = "";
+    for (let i = 1; i <= GOAL; i++) {
+      const cell = document.createElement("div");
+      cell.className = "cell" + (i % 5 === 0 ? " milestone" : "");
+      cell.dataset.index = i;
+      cell.innerHTML = `<span class="num">${i}</span>`;
+      boardEl.appendChild(cell);
+    }
+  }
+
+  function render() {
+    const theme = THEMES[currentChild];
+    const state = data[currentChild];
+
+    document.body.className = theme.bodyClass;
+    eyebrowEl.textContent = theme.eyebrow;
+    titleEl.textContent = theme.title;
+    countNumEl.textContent = state.stamps;
+    progressFillEl.style.width = Math.round((state.stamps / GOAL) * 100) + "%";
+    roundsCountEl.textContent = state.rounds + " 回";
+    rewardInputEl.value = state.reward;
+
+    document.getElementById("tab-chonan").classList.toggle("active", currentChild === "chonan");
+    document.getElementById("tab-jinan").classList.toggle("active", currentChild === "jinan");
+
+    const cells = boardEl.querySelectorAll(".cell");
+    cells.forEach((cell, idx) => {
+      const n = idx + 1;
+      const filled = n <= state.stamps;
+      cell.classList.toggle("filled", filled);
+      cell.classList.remove("just-filled");
+      if (filled) {
+        if (cell.querySelector(".stamp-icon") === null) {
+          const span = cell.querySelector(".num");
+          if (span) span.remove();
+          cell.insertAdjacentHTML("beforeend", theme.icon());
+        }
+      } else {
+        const icon = cell.querySelector(".stamp-icon");
+        if (icon) icon.remove();
+        if (!cell.querySelector(".num")) {
+          cell.insertAdjacentHTML("beforeend", `<span class="num">${n}</span>`);
+        }
+      }
+    });
+
+    if (lastFilledIndex > 0) {
+      const target = boardEl.querySelector(`.cell[data-index="${lastFilledIndex}"]`);
+      if (target) target.classList.add("just-filled");
+      lastFilledIndex = -1;
+    }
+
+    undoBtn.disabled = state.stamps <= 0;
+    addBtn.disabled = state.stamps >= GOAL;
+  }
+
+  function switchChild(child) {
+    currentChild = child;
+    buildBoard();
+    render();
+  }
+
+  function addStamp() {
+    const state = data[currentChild];
+    if (state.stamps >= GOAL) return;
+    state.stamps += 1;
+    lastFilledIndex = state.stamps;
+    saveData();
+    render();
+    if (state.stamps >= GOAL) {
+      setTimeout(showCelebration, 450);
+    }
+  }
+
+  function undoStamp() {
+    const state = data[currentChild];
+    if (state.stamps <= 0) return;
+    state.stamps -= 1;
+    saveData();
+    render();
+  }
+
+  function resetBoard() {
+    const state = data[currentChild];
+    const ok = confirm("スタンプを0個に戻します。よろしいですか？（クリア回数は変わりません）");
+    if (!ok) return;
+    state.stamps = 0;
+    saveData();
+    render();
+  }
+
+  function showCelebration() {
+    const theme = THEMES[currentChild];
+    const state = data[currentChild];
+    celebrateHeadingEl.textContent = theme.celebrateHeading;
+    celebrateEmojiEl.textContent = theme.celebrateEmoji;
+    celebrateRewardEl.textContent = state.reward || theme.defaultReward;
+    overlayEl.hidden = false;
+  }
+
+  function claimReward() {
+    const state = data[currentChild];
+    state.stamps = 0;
+    state.rounds += 1;
+    saveData();
+    overlayEl.hidden = true;
+    render();
+  }
+
+  document.getElementById("tab-chonan").addEventListener("click", () => switchChild("chonan"));
+  document.getElementById("tab-jinan").addEventListener("click", () => switchChild("jinan"));
+  addBtn.addEventListener("click", addStamp);
+  undoBtn.addEventListener("click", undoStamp);
+  resetBtn.addEventListener("click", resetBoard);
+  claimBtn.addEventListener("click", claimReward);
+
+  toggleParentBtn.addEventListener("click", () => {
+    const isHidden = parentControls.hidden;
+    parentControls.hidden = !isHidden;
+    toggleParentBtn.textContent = isHidden ? "保護者メニュー ▲" : "保護者メニュー ▼";
+  });
+
+  rewardInputEl.addEventListener("change", () => {
+    data[currentChild].reward = rewardInputEl.value.trim() || THEMES[currentChild].defaultReward;
+    saveData();
+  });
+
+  buildBoard();
+  render();
+})();
+</script>
+</body>
+</html>
