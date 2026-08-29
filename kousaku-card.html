@@ -1408,6 +1408,7 @@ function openPaint(){
   if(draft.photo && !draft.photo.startsWith('data:image/jpeg')) applyAutoCut(tol);
   pStack=[];pushUndo();
   drawBrushHint();
+  bindPaint();
   const hand=document.getElementById('pHand');
   if(hand)hand.style.display='block';
   pMode='e';setPMode('e');
@@ -1473,7 +1474,8 @@ function pResetAll(){
 /* ゆびの ばしょを キャンバスの ざひょうに なおす */
 function pPos(e){
   const cv=pCtx.canvas,r=cv.getBoundingClientRect();
-  const t=e.touches?e.touches[0]:e;
+  const t=(e.touches&&e.touches.length)?e.touches[0]
+        :(e.changedTouches&&e.changedTouches.length)?e.changedTouches[0]:e;
   return {x:(t.clientX-r.left)*cv.width/r.width, y:(t.clientY-r.top)*cv.height/r.height};
 }
 function pStroke(a,b){
@@ -1500,12 +1502,38 @@ function pStroke(a,b){
   }
   ctx.restore();
 }
+/* ゆびの イベントを つなぐ（一度だけ）。Pointer Events が いちばん 確実 */
+let pBound=false;
+function bindPaint(){
+  if(pBound)return;
+  const cv=document.getElementById('pcv');
+  if(!cv)return;
+  cv.style.touchAction='none';
+  if(window.PointerEvent){
+    cv.addEventListener('pointerdown',e=>{
+      try{cv.setPointerCapture(e.pointerId);}catch(x){}
+      pStart(e);
+    });
+    cv.addEventListener('pointermove',pMove);
+    cv.addEventListener('pointerup',pEnd);
+    cv.addEventListener('pointercancel',pEnd);
+  }else{
+    cv.addEventListener('touchstart',pStart,{passive:false});
+    cv.addEventListener('touchmove',pMove,{passive:false});
+    cv.addEventListener('touchend',pEnd);
+    cv.addEventListener('touchcancel',pEnd);
+    cv.addEventListener('mousedown',pStart);
+    cv.addEventListener('mousemove',pMove);
+    window.addEventListener('mouseup',pEnd);
+  }
+  pBound=true;
+}
 function hideHand(){
   const h=document.getElementById('pHand');
   if(h)h.style.display='none';
 }
 function pStart(e){
-  e.preventDefault();
+  if(e.cancelable)e.preventDefault();
   if(!pCtx)return;
   hideHand();
   pDrawing=true;pLast=pPos(e);
@@ -1513,7 +1541,7 @@ function pStart(e){
 }
 function pMove(e){
   if(!pDrawing||!pCtx)return;
-  e.preventDefault();
+  if(e.cancelable)e.preventDefault();
   const p=pPos(e);pStroke(pLast,p);pLast=p;
 }
 function pEnd(){ if(!pDrawing)return; pDrawing=false; pushUndo(); }
@@ -1744,20 +1772,7 @@ function confirmDel(c){
     '<button class="mini-btn warn" id="c-yes">長押しで けす</button></div>';
   document.getElementById('c-no').onclick=()=>showBig(c);
   const y=document.getElementById('c-yes');let t=null;
-  const st=()=>{t=setTimeout/* ゆびで なぞる ための イベント（画面が スクロールしないように） */
-(function bindPaint(){
-  const cv=document.getElementById('pcv');
-  if(!cv)return;
-  cv.addEventListener('touchstart',pStart,{passive:false});
-  cv.addEventListener('touchmove',pMove,{passive:false});
-  cv.addEventListener('touchend',pEnd);
-  cv.addEventListener('touchcancel',pEnd);
-  cv.addEventListener('mousedown',pStart);
-  cv.addEventListener('mousemove',pMove);
-  window.addEventListener('mouseup',pEnd);
-})();
-
-(async()=>{await dbDel(c.id);ov.classList.remove('on');openZukan();},2000);};
+  const st=()=>{t=setTimeout(async()=>{await dbDel(c.id);ov.classList.remove('on');openZukan();},2000);};
   const cl=()=>clearTimeout(t);
   ['touchstart','mousedown'].forEach(e=>y.addEventListener(e,st));
   ['touchend','touchcancel','mouseup','mouseleave'].forEach(e=>y.addEventListener(e,cl));
