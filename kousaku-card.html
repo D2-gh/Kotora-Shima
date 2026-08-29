@@ -304,46 +304,50 @@ input[type=range]{width:100%;height:36px;accent-color:var(--gold);}
 .bl{width:74px;text-align:center;}
 .bl img{width:62px;height:62px;object-fit:contain;}
 .bl b{display:block;font-size:11px;color:#fff;line-height:1.2;}
-.pTip{
-  width:min(94vw,460px);border-radius:14px;padding:9px 12px;font-size:14px;
-  text-align:center;line-height:1.5;border:3px solid var(--line);background:#101a2e;color:#cfe0ff;
-}
-.pTip b{display:block;font-size:17px;margin-bottom:2px;}
-.pTip.er{border-color:#ff8a80;background:#2a1414;} .pTip.er b{color:#ff8a80;}
-.pTip.re{border-color:var(--leafc,#8fd18f);background:#14260f;} .pTip.re b{color:#a5e6a5;}
+.askS{font-size:19px;font-weight:800;color:var(--gold);text-align:center;padding:2px 0 0;}
 .phand{
   position:absolute;left:50%;top:50%;transform:translate(-50%,-50%);
   font-size:52px;pointer-events:none;animation:swipe 1.8s ease-in-out infinite;
-  filter:drop-shadow(0 3px 6px rgba(0,0,0,.6));
+  filter:drop-shadow(0 3px 6px rgba(0,0,0,.6));z-index:3;
 }
 @keyframes swipe{
   0%{transform:translate(-120%,-50%) rotate(-8deg);opacity:0;}
-  20%{opacity:1;}
-  80%{opacity:1;}
+  20%{opacity:1;} 80%{opacity:1;}
   100%{transform:translate(40%,-50%) rotate(8deg);opacity:0;}
 }
-.pwrap{position:relative;}
+/* しゃしんを できるだけ 大きく：あまった たての すきまを ぜんぶ つかう */
 .pwrap{
-  width:min(94vw,460px);max-height:52vh;display:flex;align-items:center;justify-content:center;
+  position:relative;flex:1;min-height:0;width:100%;
+  display:flex;align-items:center;justify-content:center;
   border:4px solid var(--line);border-radius:18px;overflow:hidden;
   background:#fff;
   background-image:linear-gradient(45deg,#dfe6f0 25%,transparent 25%,transparent 75%,#dfe6f0 75%),
     linear-gradient(45deg,#dfe6f0 25%,transparent 25%,transparent 75%,#dfe6f0 75%);
   background-size:22px 22px;background-position:0 0,11px 11px;
 }
-#pcv{max-width:100%;max-height:52vh;touch-action:none;display:block;}
-.prow{display:flex;gap:10px;width:min(94vw,460px);}
-.pmode{
-  flex:1;display:flex;flex-direction:column;align-items:center;gap:2px;
-  border:4px solid var(--line);border-radius:18px;background:#101a2e;color:#fff;
-  font:inherit;font-size:30px;padding:10px;
+#pcv{max-width:100%;max-height:100%;touch-action:none;display:block;
+  width:auto;height:auto;object-fit:contain;}
+#st-paint{padding:6px 8px 8px;gap:7px;overflow:hidden;justify-content:flex-start;}
+/* よこむきに すると しゃしんが 大きく なる */
+@media (orientation:landscape){
+  #st-paint{padding:4px 6px 6px;gap:5px;}
+  #st-paint .askS{display:none;}
+  .pmode{font-size:20px;padding:4px 10px;}
+  .prow3 .mini-btn,.prow3 .go{padding:8px 4px;}
 }
-.pmode span{font-size:15px;font-weight:700;}
+.prow{display:flex;gap:8px;align-items:center;width:100%;flex-shrink:0;}
+.pmode{
+  display:flex;flex-direction:column;align-items:center;gap:0;
+  border:3px solid var(--line);border-radius:14px;background:#101a2e;color:#fff;
+  font:inherit;font-size:24px;padding:6px 12px;flex-shrink:0;line-height:1.1;
+}
+.pmode span{font-size:13px;font-weight:700;}
 .pmode.on{border-color:var(--gold);background:#2a2410;}
-.prow2{display:flex;align-items:center;gap:10px;width:min(94vw,460px);}
-.prow2 input{flex:1;}
-.plbl{font-size:14px;color:var(--sub);flex-shrink:0;}
-.pdot{background:var(--gold);border-radius:50%;flex-shrink:0;width:30px;height:30px;}
+.prow input[type=range]{flex:1;min-width:0;}
+.pdot{background:var(--gold);border-radius:50%;flex-shrink:0;width:24px;height:24px;}
+.prow3{display:flex;gap:6px;width:100%;flex-shrink:0;}
+.prow3 .mini-btn{flex:1;padding:11px 4px;font-size:14px;}
+.prow3 .go{flex:1.4;padding:11px 4px;font-size:16px;}
 .tools{display:flex;gap:8px;justify-content:center;padding:6px 14px 14px;}
 .tools button{background:none;border:1px solid var(--line);color:#5c6c92;font:inherit;
   font-size:12px;font-weight:700;border-radius:10px;padding:7px 12px;}
@@ -416,26 +420,20 @@ input[type=range]{width:100%;height:36px;accent-color:var(--gold);}
   </div>
 
   <div class="step tall" id="st-paint">
-    <div class="ask">しゃしんの うえを ゆびで なぞってね</div>
+    <div class="askS">ゆびで なぞってね</div>
     <div class="pwrap">
       <canvas id="pcv"></canvas>
       <div class="phand" id="pHand">👆</div>
     </div>
-    <div class="pTip" id="pTip"></div>
     <div class="prow">
       <button class="pmode on" id="pmErase" onclick="setPMode('e')">🧽<span>けす</span></button>
       <button class="pmode" id="pmRestore" onclick="setPMode('r')">↩️<span>もどす</span></button>
-    </div>
-    <div class="prow2">
-      <span class="plbl">ふとさ</span>
-      <input type="range" id="pSize" min="8" max="70" value="30" oninput="drawBrushHint()">
       <span class="pdot" id="pDot"></span>
+      <input type="range" id="pSize" min="8" max="70" value="30" oninput="drawBrushHint()">
     </div>
-    <div class="rowbtn">
-      <button class="mini-btn" onclick="pUndo()">◀ ひとつ もどす</button>
+    <div class="prow3">
+      <button class="mini-btn" onclick="pUndo()">◀ ひとつ</button>
       <button class="mini-btn" onclick="pResetAll()">さいしょから</button>
-    </div>
-    <div class="rowbtn">
       <button class="mini-btn" onclick="pCancel()">やめる</button>
       <button class="go" onclick="pDone()">できた！ ▶</button>
     </div>
@@ -1438,13 +1436,6 @@ function setPMode(m){
   pMode=m;
   document.getElementById('pmErase').classList.toggle('on',m==='e');
   document.getElementById('pmRestore').classList.toggle('on',m==='r');
-  const tip=document.getElementById('pTip');
-  if(tip){
-    tip.className='pTip '+(m==='e'?'er':'re');
-    tip.innerHTML = m==='e'
-      ? '<b>いま：けす</b> なぞった ところが きえます'
-      : '<b>いま：もどす</b> なぞった ところが もどります';
-  }
   sayNow(m==='e'?'けす モード。しゃしんを ゆびで なぞってね'
                 :'もどす モード。もどしたい ところを なぞってね');
 }
