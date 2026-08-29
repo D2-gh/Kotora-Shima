@@ -304,6 +304,25 @@ input[type=range]{width:100%;height:36px;accent-color:var(--gold);}
 .bl{width:74px;text-align:center;}
 .bl img{width:62px;height:62px;object-fit:contain;}
 .bl b{display:block;font-size:11px;color:#fff;line-height:1.2;}
+.pTip{
+  width:min(94vw,460px);border-radius:14px;padding:9px 12px;font-size:14px;
+  text-align:center;line-height:1.5;border:3px solid var(--line);background:#101a2e;color:#cfe0ff;
+}
+.pTip b{display:block;font-size:17px;margin-bottom:2px;}
+.pTip.er{border-color:#ff8a80;background:#2a1414;} .pTip.er b{color:#ff8a80;}
+.pTip.re{border-color:var(--leafc,#8fd18f);background:#14260f;} .pTip.re b{color:#a5e6a5;}
+.phand{
+  position:absolute;left:50%;top:50%;transform:translate(-50%,-50%);
+  font-size:52px;pointer-events:none;animation:swipe 1.8s ease-in-out infinite;
+  filter:drop-shadow(0 3px 6px rgba(0,0,0,.6));
+}
+@keyframes swipe{
+  0%{transform:translate(-120%,-50%) rotate(-8deg);opacity:0;}
+  20%{opacity:1;}
+  80%{opacity:1;}
+  100%{transform:translate(40%,-50%) rotate(8deg);opacity:0;}
+}
+.pwrap{position:relative;}
 .pwrap{
   width:min(94vw,460px);max-height:52vh;display:flex;align-items:center;justify-content:center;
   border:4px solid var(--line);border-radius:18px;overflow:hidden;
@@ -397,8 +416,12 @@ input[type=range]{width:100%;height:36px;accent-color:var(--gold);}
   </div>
 
   <div class="step tall" id="st-paint">
-    <div class="ask">ゆびで なぞって なおそう<small>けしたい ところを なぞってね</small></div>
-    <div class="pwrap"><canvas id="pcv"></canvas></div>
+    <div class="ask">しゃしんの うえを ゆびで なぞってね</div>
+    <div class="pwrap">
+      <canvas id="pcv"></canvas>
+      <div class="phand" id="pHand">👆</div>
+    </div>
+    <div class="pTip" id="pTip"></div>
     <div class="prow">
       <button class="pmode on" id="pmErase" onclick="setPMode('e')">🧽<span>けす</span></button>
       <button class="pmode" id="pmRestore" onclick="setPMode('r')">↩️<span>もどす</span></button>
@@ -1385,6 +1408,8 @@ function openPaint(){
   if(draft.photo && !draft.photo.startsWith('data:image/jpeg')) applyAutoCut(tol);
   pStack=[];pushUndo();
   drawBrushHint();
+  const hand=document.getElementById('pHand');
+  if(hand)hand.style.display='block';
   pMode='e';setPMode('e');
   toStep('paint');
   sayNow('ゆびで なぞると きえるよ。まちがえたら もどす を つかってね');
@@ -1412,7 +1437,15 @@ function setPMode(m){
   pMode=m;
   document.getElementById('pmErase').classList.toggle('on',m==='e');
   document.getElementById('pmRestore').classList.toggle('on',m==='r');
-  sayNow(m==='e'?'けす モード':'もどす モード');
+  const tip=document.getElementById('pTip');
+  if(tip){
+    tip.className='pTip '+(m==='e'?'er':'re');
+    tip.innerHTML = m==='e'
+      ? '<b>いま：けす</b> なぞった ところが きえます'
+      : '<b>いま：もどす</b> なぞった ところが もどります';
+  }
+  sayNow(m==='e'?'けす モード。しゃしんを ゆびで なぞってね'
+                :'もどす モード。もどしたい ところを なぞってね');
 }
 function drawBrushHint(){
   const r=+document.getElementById('pSize').value;
@@ -1467,9 +1500,14 @@ function pStroke(a,b){
   }
   ctx.restore();
 }
+function hideHand(){
+  const h=document.getElementById('pHand');
+  if(h)h.style.display='none';
+}
 function pStart(e){
   e.preventDefault();
   if(!pCtx)return;
+  hideHand();
   pDrawing=true;pLast=pPos(e);
   pStroke(pLast,{x:pLast.x+0.01,y:pLast.y});
 }
