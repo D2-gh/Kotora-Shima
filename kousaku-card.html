@@ -304,6 +304,27 @@ input[type=range]{width:100%;height:36px;accent-color:var(--gold);}
 .bl{width:74px;text-align:center;}
 .bl img{width:62px;height:62px;object-fit:contain;}
 .bl b{display:block;font-size:11px;color:#fff;line-height:1.2;}
+.pwrap{
+  width:min(94vw,460px);max-height:52vh;display:flex;align-items:center;justify-content:center;
+  border:4px solid var(--line);border-radius:18px;overflow:hidden;
+  background:#fff;
+  background-image:linear-gradient(45deg,#dfe6f0 25%,transparent 25%,transparent 75%,#dfe6f0 75%),
+    linear-gradient(45deg,#dfe6f0 25%,transparent 25%,transparent 75%,#dfe6f0 75%);
+  background-size:22px 22px;background-position:0 0,11px 11px;
+}
+#pcv{max-width:100%;max-height:52vh;touch-action:none;display:block;}
+.prow{display:flex;gap:10px;width:min(94vw,460px);}
+.pmode{
+  flex:1;display:flex;flex-direction:column;align-items:center;gap:2px;
+  border:4px solid var(--line);border-radius:18px;background:#101a2e;color:#fff;
+  font:inherit;font-size:30px;padding:10px;
+}
+.pmode span{font-size:15px;font-weight:700;}
+.pmode.on{border-color:var(--gold);background:#2a2410;}
+.prow2{display:flex;align-items:center;gap:10px;width:min(94vw,460px);}
+.prow2 input{flex:1;}
+.plbl{font-size:14px;color:var(--sub);flex-shrink:0;}
+.pdot{background:var(--gold);border-radius:50%;flex-shrink:0;width:30px;height:30px;}
 .tools{display:flex;gap:8px;justify-content:center;padding:6px 14px 14px;}
 .tools button{background:none;border:1px solid var(--line);color:#5c6c92;font:inherit;
   font-size:12px;font-weight:700;border-radius:10px;padding:7px 12px;}
@@ -370,7 +391,30 @@ input[type=range]{width:100%;height:36px;accent-color:var(--gold);}
     <div class="slider"><input type="range" id="tolR" min="10" max="120" value="52" oninput="reCut()"></div>
     <div class="rowbtn">
       <button class="mini-btn" onclick="keepBG()">けさない</button>
+      <button class="mini-btn" onclick="openPaint()">✏️ じぶんで なおす</button>
       <button class="go" onclick="toElem()">つぎへ ▶</button>
+    </div>
+  </div>
+
+  <div class="step tall" id="st-paint">
+    <div class="ask">ゆびで なぞって なおそう<small>けしたい ところを なぞってね</small></div>
+    <div class="pwrap"><canvas id="pcv"></canvas></div>
+    <div class="prow">
+      <button class="pmode on" id="pmErase" onclick="setPMode('e')">🧽<span>けす</span></button>
+      <button class="pmode" id="pmRestore" onclick="setPMode('r')">↩️<span>もどす</span></button>
+    </div>
+    <div class="prow2">
+      <span class="plbl">ふとさ</span>
+      <input type="range" id="pSize" min="8" max="70" value="30" oninput="drawBrushHint()">
+      <span class="pdot" id="pDot"></span>
+    </div>
+    <div class="rowbtn">
+      <button class="mini-btn" onclick="pUndo()">◀ ひとつ もどす</button>
+      <button class="mini-btn" onclick="pResetAll()">さいしょから</button>
+    </div>
+    <div class="rowbtn">
+      <button class="mini-btn" onclick="pCancel()">やめる</button>
+      <button class="go" onclick="pDone()">できた！ ▶</button>
     </div>
   </div>
 
@@ -1219,7 +1263,7 @@ function esc(s){return(s||'').replace(/[&<>"]/g,m=>({'&':'&amp;','<':'&lt;','>':
 
 /* ========== 作成フロー ========== */
 let draft={},srcCanvas=null,hist=[],curStep=null;
-const TITLES={1:'しゃしんを えらぶ','cut':'はいけいを けす',2:'ちからを えらぶ',3:'なまえを えらぶ',4:'ひっさつわざ',5:'つよさを きめる',6:'かんせい！'};
+const TITLES={1:'しゃしんを えらぶ','cut':'はいけいを けす','paint':'ゆびで なおす',2:'ちからを えらぶ',3:'なまえを えらぶ',4:'ひっさつわざ',5:'つよさを きめる',6:'かんせい！'};
 
 function startCreate(){
   draft={photo:null,elem:null,name:'',tech:'',power:0};
@@ -1241,7 +1285,7 @@ function showStep(n){
   stopSpeech();clearInterval(mt);
   curStep=n;
   document.querySelectorAll('#s-make .step').forEach(s=>s.classList.remove('on'));
-  document.getElementById(n==='cut'?'st-cut':'st'+n).classList.add('on');
+  document.getElementById(typeof n==='string'?'st-'+n:'st'+n).classList.add('on');
   document.getElementById('mkTitle').textContent=TITLES[n]||'カードを つくる';
   if(n===2){buildElems();sayNow('どんな ちからかな');}
   if(n===3){renderOpts('name');setGrey('n-next',!draft.name);readOpts('name');}
@@ -1316,6 +1360,148 @@ function keepBG(){
   draft.photo=c.toDataURL('image/jpeg',.78);
   document.getElementById('cutPrev').src=draft.photo;sayNow('はいけいを のこしたよ');}
 function toElem(){toStep(2);}
+
+/* ================= ゆびで なおす（けす／もどす） =================
+   pFull  : 元の しゃしん（縮小ずみ）— もどす ときの もと
+   pWork  : いま 見えている 絵
+   pStack : ひとつ もどす ための 記録（さいだい 12かい）           */
+let pFull=null,pWork=null,pCtx=null,pMode='e',pDrawing=false,pStack=[],pLast=null;
+
+function openPaint(){
+  if(!srcCanvas){sayNow('さきに しゃしんを えらんでね');return;}
+  const cv=document.getElementById('pcv');
+  /* 画面に おさまる 大きさに そろえる（さいだい 520px） */
+  const lim=Math.min(1,520/Math.max(srcCanvas.width,srcCanvas.height));
+  const w=Math.round(srcCanvas.width*lim), h=Math.round(srcCanvas.height*lim);
+  cv.width=w;cv.height=h;
+  pCtx=cv.getContext('2d',{willReadFrequently:true});
+  /* もとの しゃしん を おぼえておく */
+  pFull=document.createElement('canvas');pFull.width=w;pFull.height=h;
+  pFull.getContext('2d').drawImage(srcCanvas,0,0,w,h);
+  /* いまの きりぬき判定を その場で やり直す（位置が ずれないように） */
+  pCtx.clearRect(0,0,w,h);
+  pCtx.drawImage(pFull,0,0);
+  const tol=+(document.getElementById('tolR')||{value:52}).value;
+  if(draft.photo && !draft.photo.startsWith('data:image/jpeg')) applyAutoCut(tol);
+  pStack=[];pushUndo();
+  drawBrushHint();
+  pMode='e';setPMode('e');
+  toStep('paint');
+  sayNow('ゆびで なぞると きえるよ。まちがえたら もどす を つかってね');
+}
+/* まわりの いろに にた ところを 透明にする（cutOut と おなじ かんがえ方） */
+function applyAutoCut(tol){
+  const W=pCtx.canvas.width,H=pCtx.canvas.height;
+  const im=pCtx.getImageData(0,0,W,H),d=im.data;
+  let r=0,g=0,b=0,n=0;
+  const smp=(x,y)=>{const i=(y*W+x)*4;r+=d[i];g+=d[i+1];b+=d[i+2];n++;};
+  for(let x=0;x<W;x+=2){smp(x,0);smp(x,H-1);}
+  for(let y=0;y<H;y+=2){smp(0,y);smp(W-1,y);}
+  r/=n;g/=n;b/=n;
+  const t2=tol*tol*3,seen=new Uint8Array(W*H),st=new Int32Array(W*H);let sp=0;
+  const push=q=>{if(!seen[q]){const i=q*4,dr=d[i]-r,dg=d[i+1]-g,db=d[i+2]-b;
+    if(dr*dr+dg*dg+db*db<t2){seen[q]=1;st[sp++]=q;}}};
+  for(let x=0;x<W;x++){push(x);push((H-1)*W+x);}
+  for(let y=0;y<H;y++){push(y*W);push(y*W+W-1);}
+  while(sp>0){const q=st[--sp],x=q%W,y=(q-x)/W;
+    if(x>0)push(q-1);if(x<W-1)push(q+1);if(y>0)push(q-W);if(y<H-1)push(q+W);}
+  for(let q=0;q<W*H;q++)if(seen[q])d[q*4+3]=0;
+  pCtx.putImageData(im,0,0);
+}
+function setPMode(m){
+  pMode=m;
+  document.getElementById('pmErase').classList.toggle('on',m==='e');
+  document.getElementById('pmRestore').classList.toggle('on',m==='r');
+  sayNow(m==='e'?'けす モード':'もどす モード');
+}
+function drawBrushHint(){
+  const r=+document.getElementById('pSize').value;
+  const d=document.getElementById('pDot');
+  d.style.width=d.style.height=Math.max(10,Math.min(44,r))+'px';
+}
+function pushUndo(){
+  try{
+    pStack.push(pCtx.getImageData(0,0,pCtx.canvas.width,pCtx.canvas.height));
+    if(pStack.length>12)pStack.shift();
+  }catch(e){}
+}
+function pUndo(){
+  if(pStack.length<2){sayNow('これいじょうは もどせないよ');return;}
+  pStack.pop();
+  pCtx.putImageData(pStack[pStack.length-1],0,0);
+  sayNow('ひとつ もどしたよ');
+}
+function pResetAll(){
+  const w=pCtx.canvas.width,h=pCtx.canvas.height;
+  pCtx.clearRect(0,0,w,h);pCtx.drawImage(pFull,0,0);
+  pStack=[];pushUndo();
+  sayNow('さいしょの しゃしんに もどしたよ');
+}
+/* ゆびの ばしょを キャンバスの ざひょうに なおす */
+function pPos(e){
+  const cv=pCtx.canvas,r=cv.getBoundingClientRect();
+  const t=e.touches?e.touches[0]:e;
+  return {x:(t.clientX-r.left)*cv.width/r.width, y:(t.clientY-r.top)*cv.height/r.height};
+}
+function pStroke(a,b){
+  const rad=+document.getElementById('pSize').value;
+  const ctx=pCtx;
+  ctx.save();
+  ctx.lineCap='round';ctx.lineJoin='round';ctx.lineWidth=rad;
+  if(pMode==='e'){
+    ctx.globalCompositeOperation='destination-out';
+    ctx.strokeStyle='rgba(0,0,0,1)';
+    ctx.beginPath();ctx.moveTo(a.x,a.y);ctx.lineTo(b.x,b.y);ctx.stroke();
+  }else{
+    /* もどす：もとの しゃしんを その線の かたちだけ 描きもどす */
+    const t=document.createElement('canvas');
+    t.width=ctx.canvas.width;t.height=ctx.canvas.height;
+    const tc=t.getContext('2d');
+    tc.lineCap='round';tc.lineJoin='round';tc.lineWidth=rad;
+    tc.strokeStyle='#000';
+    tc.beginPath();tc.moveTo(a.x,a.y);tc.lineTo(b.x,b.y);tc.stroke();
+    tc.globalCompositeOperation='source-in';
+    tc.drawImage(pFull,0,0);
+    ctx.globalCompositeOperation='source-over';
+    ctx.drawImage(t,0,0);
+  }
+  ctx.restore();
+}
+function pStart(e){
+  e.preventDefault();
+  if(!pCtx)return;
+  pDrawing=true;pLast=pPos(e);
+  pStroke(pLast,{x:pLast.x+0.01,y:pLast.y});
+}
+function pMove(e){
+  if(!pDrawing||!pCtx)return;
+  e.preventDefault();
+  const p=pPos(e);pStroke(pLast,p);pLast=p;
+}
+function pEnd(){ if(!pDrawing)return; pDrawing=false; pushUndo(); }
+function pCancel(){ toStep('cut'); }
+/* できあがりを きりぬき画像として ほぞん（まわりの あまりを 切りつめる） */
+function pDone(){
+  const cv=pCtx.canvas,W=cv.width,H=cv.height;
+  const d=pCtx.getImageData(0,0,W,H).data;
+  let x0=W,y0=H,x1=0,y1=0,any=false;
+  for(let y=0;y<H;y++)for(let x=0;x<W;x++){
+    if(d[(y*W+x)*4+3]>40){any=true;
+      if(x<x0)x0=x;if(x>x1)x1=x;if(y<y0)y0=y;if(y>y1)y1=y;}}
+  if(!any){sayNow('ぜんぶ きえちゃった。もどす を おしてね');return;}
+  const pad=6,cw=Math.min(W,x1-x0+1+pad*2),ch=Math.min(H,y1-y0+1+pad*2);
+  const out=document.createElement('canvas');
+  const lim=Math.min(1,320/Math.max(cw,ch));
+  out.width=Math.round(cw*lim);out.height=Math.round(ch*lim);
+  out.getContext('2d').drawImage(cv,Math.max(0,x0-pad),Math.max(0,y0-pad),cw,ch,
+    0,0,out.width,out.height);
+  let u=out.toDataURL('image/webp',0.8);
+  if(!u.startsWith('data:image/webp'))u=out.toDataURL('image/png');
+  draft.photo=u;
+  document.getElementById('cutPrev').src=u;
+  toStep('cut');
+  sayNow('きれいに なったね！');
+}
 
 function buildElems(){
   const box=document.getElementById('elems');box.innerHTML='';
@@ -1520,7 +1706,20 @@ function confirmDel(c){
     '<button class="mini-btn warn" id="c-yes">長押しで けす</button></div>';
   document.getElementById('c-no').onclick=()=>showBig(c);
   const y=document.getElementById('c-yes');let t=null;
-  const st=()=>{t=setTimeout(async()=>{await dbDel(c.id);ov.classList.remove('on');openZukan();},2000);};
+  const st=()=>{t=setTimeout/* ゆびで なぞる ための イベント（画面が スクロールしないように） */
+(function bindPaint(){
+  const cv=document.getElementById('pcv');
+  if(!cv)return;
+  cv.addEventListener('touchstart',pStart,{passive:false});
+  cv.addEventListener('touchmove',pMove,{passive:false});
+  cv.addEventListener('touchend',pEnd);
+  cv.addEventListener('touchcancel',pEnd);
+  cv.addEventListener('mousedown',pStart);
+  cv.addEventListener('mousemove',pMove);
+  window.addEventListener('mouseup',pEnd);
+})();
+
+(async()=>{await dbDel(c.id);ov.classList.remove('on');openZukan();},2000);};
   const cl=()=>clearTimeout(t);
   ['touchstart','mousedown'].forEach(e=>y.addEventListener(e,st));
   ['touchend','touchcancel','mouseup','mouseleave'].forEach(e=>y.addEventListener(e,cl));
