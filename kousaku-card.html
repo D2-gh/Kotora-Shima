@@ -348,6 +348,17 @@ input[type=range]{width:100%;height:36px;accent-color:var(--gold);}
 .prow3{display:flex;gap:6px;width:100%;flex-shrink:0;}
 .prow3 .mini-btn{flex:1;padding:11px 4px;font-size:14px;}
 .prow3 .go{flex:1.4;padding:11px 4px;font-size:16px;}
+.egHead{
+  display:flex;align-items:center;gap:8px;width:100%;border:3px solid var(--line);
+  border-radius:14px;background:#101a2e;color:#fff;font:inherit;padding:9px 12px;
+  margin-bottom:6px;text-align:left;
+}
+.egHead.open{border-color:var(--gold);background:#1d1a0d;}
+.egIco{font-size:15px;letter-spacing:-1px;flex-shrink:0;}
+.egName{flex:1;font-size:16px;font-weight:800;}
+.egArrow{color:var(--gold);font-size:15px;}
+.egGrid{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin:0 0 12px;}
+#elems{display:block;}
 .tools{display:flex;gap:8px;justify-content:center;padding:6px 14px 14px;}
 .tools button{background:none;border:1px solid var(--line);color:#5c6c92;font:inherit;
   font-size:12px;font-weight:700;border-radius:10px;padding:7px 12px;}
@@ -546,21 +557,96 @@ function sayNow(text){
 
 /* ========== 属性 15種 ========== */
 const ELEMS=[
- {k:'fire', n:'ほのお',   e:'🔥', g:'linear-gradient(160deg,#ff8a50,#d84315)', w:['マグマ','バーニング','フレイム'], t:'ファイヤー'},
- {k:'thun', n:'かみなり', e:'⚡', g:'linear-gradient(160deg,#ffe082,#f57f17)', w:['サンダー','ボルト','スパーク'], t:'サンダー'},
- {k:'water',n:'みず',     e:'💧', g:'linear-gradient(160deg,#81d4fa,#0277bd)', w:['アクア','タイダル','スプラッシュ'], t:'アクア'},
- {k:'wind', n:'かぜ',     e:'🌪', g:'linear-gradient(160deg,#a5d6a7,#2e7d32)', w:['ストーム','サイクロン','ウィンド'], t:'ハリケーン'},
- {k:'light',n:'ひかり',   e:'✨', g:'linear-gradient(160deg,#fff59d,#ffab00)', w:['シャイン','ゴールド','ホーリー'], t:'シャイニング'},
- {k:'dark', n:'やみ',     e:'🌑', g:'linear-gradient(160deg,#b39ddb,#4527a0)', w:['シャドウ','ダーク','ナイト'], t:'ダーク'},
- {k:'ice',  n:'こおり',   e:'❄️', g:'linear-gradient(160deg,#b3e5fc,#00838f)', w:['アイス','ブリザード','フローズン'], t:'アイス'},
- {k:'rock', n:'いわ',     e:'🪨', g:'linear-gradient(160deg,#bcaaa4,#5d4037)', w:['ロック','ストーン','グランド'], t:'ロック'},
- {k:'leaf', n:'もり',     e:'🌲', g:'linear-gradient(160deg,#aed581,#33691e)', w:['リーフ','フォレスト','ジャングル'], t:'リーフ'},
- {k:'toxic',n:'どく',     e:'🧪', g:'linear-gradient(160deg,#e1bee7,#6a1b9a)', w:['ポイズン','スライム','ケミカル'], t:'ポイズン'},
- {k:'steel',n:'はがね',   e:'⚙️', g:'linear-gradient(160deg,#cfd8dc,#455a64)', w:['スチール','クローム','マグネット'], t:'スチール'},
- {k:'space',n:'うちゅう', e:'🚀', g:'linear-gradient(160deg,#7986cb,#1a237e)', w:['コスモ','ギャラクシー','スター'], t:'コスモ'},
- {k:'sound',n:'おと',     e:'🎵', g:'linear-gradient(160deg,#f48fb1,#ad1457)', w:['サウンド','エコー','リズム'], t:'サウンド'},
- {k:'magic',n:'まほう',   e:'🪄', g:'linear-gradient(160deg,#80deea,#00695c)', w:['マジック','ミラクル','ウィザード'], t:'マジック'},
- {k:'time', n:'じかん',   e:'⏳', g:'linear-gradient(160deg,#ffcc80,#e65100)', w:['タイム','クロノ','スピード'], t:'タイム'}
+ /* しぜん */
+ {k:'fire', n:'ほのお', e:'🔥', grp:'しぜん', g:'linear-gradient(160deg,#ff8a50,#d84315)', w:['マグマ','バーニング','フレイム'], t:'ファイヤー'},
+ {k:'thun', n:'かみなり', e:'⚡', grp:'しぜん', g:'linear-gradient(160deg,#ffe082,#f57f17)', w:['サンダー','ボルト','スパーク'], t:'サンダー'},
+ {k:'water', n:'みず', e:'💧', grp:'しぜん', g:'linear-gradient(160deg,#81d4fa,#0277bd)', w:['アクア','タイダル','スプラッシュ'], t:'アクア'},
+ {k:'wind', n:'かぜ', e:'🌪', grp:'しぜん', g:'linear-gradient(160deg,#a5d6a7,#2e7d32)', w:['ストーム','サイクロン','ウィンド'], t:'ハリケーン'},
+ {k:'rock', n:'いわ', e:'🪨', grp:'しぜん', g:'linear-gradient(160deg,#bcaaa4,#5d4037)', w:['ロック','ストーン','グランド'], t:'ロック'},
+ /* ひかりとやみ */
+ {k:'light', n:'ひかり', e:'✨', grp:'ひかりとやみ', g:'linear-gradient(160deg,#fff59d,#ffab00)', w:['シャイン','ゴールド','ホーリー'], t:'シャイニング'},
+ {k:'dark', n:'やみ', e:'🌑', grp:'ひかりとやみ', g:'linear-gradient(160deg,#b39ddb,#4527a0)', w:['シャドウ','ダーク','ナイト'], t:'ダーク'},
+ {k:'magic', n:'まほう', e:'🪄', grp:'ひかりとやみ', g:'linear-gradient(160deg,#80deea,#00695c)', w:['マジック','ミラクル','ウィザード'], t:'マジック'},
+ {k:'time', n:'じかん', e:'⏳', grp:'ひかりとやみ', g:'linear-gradient(160deg,#ffcc80,#e65100)', w:['タイム','クロノ','スピード'], t:'タイム'},
+ {k:'space', n:'うちゅう', e:'🚀', grp:'ひかりとやみ', g:'linear-gradient(160deg,#7986cb,#1a237e)', w:['コスモ','ギャラクシー','スター'], t:'コスモ'},
+ /* つよいもの */
+ {k:'steel', n:'はがね', e:'⚙️', grp:'つよいもの', g:'linear-gradient(160deg,#cfd8dc,#455a64)', w:['スチール','クローム','マグネット'], t:'スチール'},
+ {k:'ice', n:'こおり', e:'❄️', grp:'つよいもの', g:'linear-gradient(160deg,#b3e5fc,#00838f)', w:['アイス','ブリザード','フローズン'], t:'アイス'},
+ {k:'sound', n:'おと', e:'🎵', grp:'つよいもの', g:'linear-gradient(160deg,#f48fb1,#ad1457)', w:['サウンド','エコー','リズム'], t:'サウンド'},
+ {k:'toxic', n:'どく', e:'🧪', grp:'つよいもの', g:'linear-gradient(160deg,#e1bee7,#6a1b9a)', w:['ポイズン','スライム','ケミカル'], t:'ポイズン'},
+ {k:'leaf', n:'もり', e:'🌲', grp:'つよいもの', g:'linear-gradient(160deg,#aed581,#33691e)', w:['リーフ','フォレスト','ジャングル'], t:'リーフ'},
+ /* そら */
+ {k:'cloud', n:'くも', e:'☁️', grp:'そら', g:'linear-gradient(160deg,#e3f2fd,#78909c)', w:['クラウド','ミスト','フォグ'], t:'クラウド'},
+ {k:'rain', n:'あめ', e:'🌧', grp:'そら', g:'linear-gradient(160deg,#90caf9,#1565c0)', w:['レイン','シャワー','ドロップ'], t:'レイン'},
+ {k:'rainbow', n:'にじ', e:'🌈', grp:'そら', g:'linear-gradient(160deg,#f8bbd0,#8e24aa)', w:['レインボー','プリズム','アーチ'], t:'レインボー'},
+ {k:'sun', n:'たいよう', e:'☀️', grp:'そら', g:'linear-gradient(160deg,#ffe57f,#ff6f00)', w:['ソーラー','サン','デイ'], t:'ソーラー'},
+ {k:'moon', n:'つき', e:'🌙', grp:'そら', g:'linear-gradient(160deg,#c5cae9,#283593)', w:['ルナ','ムーン','クレセント'], t:'ルナ'},
+ /* うみ */
+ {k:'wave', n:'なみ', e:'🌊', grp:'うみ', g:'linear-gradient(160deg,#80deea,#0097a7)', w:['ウェイブ','サーフ','タイド'], t:'ウェイブ'},
+ {k:'bubble', n:'あわ', e:'🫧', grp:'うみ', g:'linear-gradient(160deg,#b2ebf2,#00838f)', w:['バブル','フォーム','ソーダ'], t:'バブル'},
+ {k:'shell', n:'かい', e:'🐚', grp:'うみ', g:'linear-gradient(160deg,#ffe0b2,#ef6c00)', w:['シェル','パール','コーラル'], t:'シェル'},
+ {k:'fish', n:'さかな', e:'🐟', grp:'うみ', g:'linear-gradient(160deg,#81d4fa,#01579b)', w:['フィッシュ','フィン','スイム'], t:'フィッシュ'},
+ {k:'ship', n:'ふね', e:'⛵', grp:'うみ', g:'linear-gradient(160deg,#b0bec5,#37474f)', w:['シップ','セイル','アンカー'], t:'シップ'},
+ /* だいち */
+ {k:'sand', n:'すな', e:'🏜', grp:'だいち', g:'linear-gradient(160deg,#ffe082,#bf360c)', w:['サンド','デザート','ダスト'], t:'サンド'},
+ {k:'volcano', n:'かざん', e:'🌋', grp:'だいち', g:'linear-gradient(160deg,#ff8a65,#b71c1c)', w:['ボルケーノ','クレーター','アッシュ'], t:'ボルケーノ'},
+ {k:'crystal', n:'クリスタル', e:'💎', grp:'だいち', g:'linear-gradient(160deg,#b3e5fc,#0288d1)', w:['クリスタル','ジュエル','プリズム'], t:'クリスタル'},
+ {k:'cave', n:'どうくつ', e:'🕳', grp:'だいち', g:'linear-gradient(160deg,#a1887f,#3e2723)', w:['ケイブ','ホール','ダンジョン'], t:'ケイブ'},
+ {k:'mountain', n:'やま', e:'⛰', grp:'だいち', g:'linear-gradient(160deg,#c5e1a5,#33691e)', w:['マウンテン','ピーク','クリフ'], t:'マウンテン'},
+ /* いきもの */
+ {k:'dragon', n:'ドラゴン', e:'🐉', grp:'いきもの', g:'linear-gradient(160deg,#a5d6a7,#1b5e20)', w:['ドラゴン','ワイバーン','サーペント'], t:'ドラゴン'},
+ {k:'dino', n:'きょうりゅう', e:'🦖', grp:'いきもの', g:'linear-gradient(160deg,#c5e1a5,#558b2f)', w:['ダイナ','レックス','ラプター'], t:'ダイナ'},
+ {k:'bird', n:'とり', e:'🦅', grp:'いきもの', g:'linear-gradient(160deg,#ffcc80,#e65100)', w:['バード','ファルコン','イーグル'], t:'バード'},
+ {k:'bug', n:'むし', e:'🐞', grp:'いきもの', g:'linear-gradient(160deg,#ef9a9a,#c62828)', w:['ビートル','ホーン','スティング'], t:'ビートル'},
+ {k:'wolf', n:'おおかみ', e:'🐺', grp:'いきもの', g:'linear-gradient(160deg,#b0bec5,#455a64)', w:['ウルフ','ファング','ハウル'], t:'ウルフ'},
+ /* うみのいきもの */
+ {k:'shark', n:'サメ', e:'🦈', grp:'うみのいきもの', g:'linear-gradient(160deg,#90a4ae,#263238)', w:['シャーク','ジョーズ','フィン'], t:'シャーク'},
+ {k:'whale', n:'クジラ', e:'🐋', grp:'うみのいきもの', g:'linear-gradient(160deg,#81d4fa,#01579b)', w:['ホエール','ブルー','ソナー'], t:'ホエール'},
+ {k:'octo', n:'タコ', e:'🐙', grp:'うみのいきもの', g:'linear-gradient(160deg,#f48fb1,#880e4f)', w:['オクト','インク','テンタクル'], t:'オクト'},
+ {k:'crab', n:'カニ', e:'🦀', grp:'うみのいきもの', g:'linear-gradient(160deg,#ff8a65,#bf360c)', w:['クラブ','シザー','クロー'], t:'クラブ'},
+ {k:'jelly', n:'クラゲ', e:'🪼', grp:'うみのいきもの', g:'linear-gradient(160deg,#ce93d8,#6a1b9a)', w:['ジェリー','フロート','スティング'], t:'ジェリー'},
+ /* メカ */
+ {k:'robot', n:'ロボット', e:'🤖', grp:'メカ', g:'linear-gradient(160deg,#b0bec5,#37474f)', w:['ロボ','メカ','アンドロイド'], t:'ロボ'},
+ {k:'gear', n:'ギア', e:'⚙', grp:'メカ', g:'linear-gradient(160deg,#cfd8dc,#546e7a)', w:['ギア','エンジン','タービン'], t:'ギア'},
+ {k:'battery', n:'でんち', e:'🔋', grp:'メカ', g:'linear-gradient(160deg,#c5e1a5,#2e7d32)', w:['バッテリー','チャージ','エナジー'], t:'チャージ'},
+ {k:'laser', n:'レーザー', e:'🔫', grp:'メカ', g:'linear-gradient(160deg,#ef9a9a,#b71c1c)', w:['レーザー','ブラスター','キャノン'], t:'レーザー'},
+ {k:'radar', n:'レーダー', e:'📡', grp:'メカ', g:'linear-gradient(160deg,#b3e5fc,#0277bd)', w:['レーダー','シグナル','スキャン'], t:'レーダー'},
+ /* のりもの */
+ {k:'car', n:'くるま', e:'🚗', grp:'のりもの', g:'linear-gradient(160deg,#ef9a9a,#c62828)', w:['カー','ターボ','ホイール'], t:'ターボ'},
+ {k:'train', n:'でんしゃ', e:'🚄', grp:'のりもの', g:'linear-gradient(160deg,#90caf9,#1565c0)', w:['トレイン','レール','エクスプレス'], t:'エクスプレス'},
+ {k:'plane', n:'ひこうき', e:'✈️', grp:'のりもの', g:'linear-gradient(160deg,#b3e5fc,#0288d1)', w:['ジェット','フライ','ウィング'], t:'ジェット'},
+ {k:'digger', n:'ショベルカー', e:'🚜', grp:'のりもの', g:'linear-gradient(160deg,#ffe082,#ef6c00)', w:['ショベル','クレーン','パワー'], t:'ショベル'},
+ {k:'bike', n:'バイク', e:'🏍', grp:'のりもの', g:'linear-gradient(160deg,#b0bec5,#424242)', w:['バイク','スロットル','ダッシュ'], t:'ダッシュ'},
+ /* ゆうしゃ */
+ {k:'sword', n:'けん', e:'⚔️', grp:'ゆうしゃ', g:'linear-gradient(160deg,#cfd8dc,#37474f)', w:['ソード','ブレード','エッジ'], t:'ソード'},
+ {k:'shield', n:'たて', e:'🛡', grp:'ゆうしゃ', g:'linear-gradient(160deg,#a5d6a7,#2e7d32)', w:['シールド','ガード','ウォール'], t:'シールド'},
+ {k:'bow', n:'ゆみ', e:'🏹', grp:'ゆうしゃ', g:'linear-gradient(160deg,#ffcc80,#e65100)', w:['アロー','ボウ','シュート'], t:'アロー'},
+ {k:'hammer', n:'ハンマー', e:'🔨', grp:'ゆうしゃ', g:'linear-gradient(160deg,#bcaaa4,#4e342e)', w:['ハンマー','スマッシュ','メガトン'], t:'ハンマー'},
+ {k:'crown', n:'おうかん', e:'👑', grp:'ゆうしゃ', g:'linear-gradient(160deg,#ffe57f,#ff8f00)', w:['クラウン','キング','ロイヤル'], t:'ロイヤル'},
+ /* たべもの */
+ {k:'candy', n:'おかし', e:'🍬', grp:'たべもの', g:'linear-gradient(160deg,#f8bbd0,#ad1457)', w:['キャンディ','スイート','シュガー'], t:'スイート'},
+ {k:'cake', n:'ケーキ', e:'🍰', grp:'たべもの', g:'linear-gradient(160deg,#ffccbc,#d84315)', w:['ケーキ','クリーム','ベリー'], t:'クリーム'},
+ {k:'ramen', n:'ラーメン', e:'🍜', grp:'たべもの', g:'linear-gradient(160deg,#ffe0b2,#e65100)', w:['ラーメン','ヌードル','スープ'], t:'スープ'},
+ {k:'sushi', n:'おすし', e:'🍣', grp:'たべもの', g:'linear-gradient(160deg,#ffab91,#bf360c)', w:['スシ','ネタ','ライス'], t:'スシ'},
+ {k:'juice', n:'ジュース', e:'🥤', grp:'たべもの', g:'linear-gradient(160deg,#c5e1a5,#558b2f)', w:['ジュース','フレッシュ','ソーダ'], t:'ソーダ'},
+ /* きもち */
+ {k:'happy', n:'げんき', e:'😆', grp:'きもち', g:'linear-gradient(160deg,#ffe082,#f9a825)', w:['ハッピー','スマイル','チア'], t:'スマイル'},
+ {k:'brave', n:'ゆうき', e:'🔥', grp:'きもち', g:'linear-gradient(160deg,#ff8a65,#c62828)', w:['ブレイブ','カレッジ','ハート'], t:'ブレイブ'},
+ {k:'calm', n:'おちつき', e:'🍃', grp:'きもち', g:'linear-gradient(160deg,#a5d6a7,#388e3c)', w:['カーム','ピース','サイレント'], t:'カーム'},
+ {k:'angry', n:'おこり', e:'😠', grp:'きもち', g:'linear-gradient(160deg,#ef9a9a,#b71c1c)', w:['アングリー','レイジ','バースト'], t:'レイジ'},
+ {k:'dream', n:'ゆめ', e:'💭', grp:'きもち', g:'linear-gradient(160deg,#ce93d8,#4a148c)', w:['ドリーム','スリープ','ファンタジー'], t:'ドリーム'},
+ /* いろ */
+ {k:'red', n:'あか', e:'🟥', grp:'いろ', g:'linear-gradient(160deg,#ff8a80,#c62828)', w:['レッド','ルビー','スカーレット'], t:'レッド'},
+ {k:'blue', n:'あお', e:'🟦', grp:'いろ', g:'linear-gradient(160deg,#82b1ff,#1565c0)', w:['ブルー','サファイア','マリン'], t:'ブルー'},
+ {k:'yellow', n:'きいろ', e:'🟨', grp:'いろ', g:'linear-gradient(160deg,#ffe57f,#f9a825)', w:['イエロー','トパーズ','レモン'], t:'イエロー'},
+ {k:'green', n:'みどり', e:'🟩', grp:'いろ', g:'linear-gradient(160deg,#a5d6a7,#2e7d32)', w:['グリーン','エメラルド','リーフ'], t:'グリーン'},
+ {k:'purple', n:'むらさき', e:'🟪', grp:'いろ', g:'linear-gradient(160deg,#ce93d8,#6a1b9a)', w:['パープル','アメジスト','バイオレット'], t:'パープル'},
+ /* ふしぎ */
+ {k:'ghost', n:'おばけ', e:'👻', grp:'ふしぎ', g:'linear-gradient(160deg,#e1bee7,#4a148c)', w:['ゴースト','ファントム','スピリット'], t:'ゴースト'},
+ {k:'slime', n:'スライム', e:'🫠', grp:'ふしぎ', g:'linear-gradient(160deg,#b2dfdb,#00695c)', w:['スライム','ジェル','ドロップ'], t:'スライム'},
+ {k:'star', n:'ほし', e:'⭐', grp:'ふしぎ', g:'linear-gradient(160deg,#fff59d,#f57f17)', w:['スター','シャイン','メテオ'], t:'メテオ'},
+ {k:'mirror', n:'かがみ', e:'🪞', grp:'ふしぎ', g:'linear-gradient(160deg,#b3e5fc,#0277bd)', w:['ミラー','リフレクト','グラス'], t:'ミラー'},
+ {k:'key', n:'かぎ', e:'🗝', grp:'ふしぎ', g:'linear-gradient(160deg,#ffe082,#ef6c00)', w:['キー','ロック','シークレット'], t:'キー'}
 ];
 const EL=k=>ELEMS.find(x=>x.k===k)||ELEMS[0];
 const A=['ゴウ','ギガ','メタル','ドリル','グレート','ネオ','ウルトラ','アイアン','ジェット','ゼロ','ロケット','ダイヤ'];
@@ -1560,15 +1646,38 @@ function pDone(){
   sayNow('きれいに なったね！');
 }
 
+/* 75しゅるい あるので、なかまごとに 分けて 出す。
+   いちどに 見えるのは 5つだけ。えらんだ なかまは ひらいたまま。 */
+let elemGrp=null;
 function buildElems(){
   const box=document.getElementById('elems');box.innerHTML='';
-  ELEMS.forEach(el=>{const b=document.createElement('button');
-    b.className='elem'+(draft.elem===el.k?' sel':'');b.style.background=el.g;
-    b.innerHTML='<span>'+el.e+'</span>'+el.n;
-    b.onclick=()=>{draft.elem=el.k;sayNow(el.n);
-      [...box.children].forEach(c=>c.classList.remove('sel'));b.classList.add('sel');
-      setGrey('e-next',false);};
-    box.appendChild(b);});
+  const groups=[];
+  ELEMS.forEach(el=>{ if(!groups.includes(el.grp))groups.push(el.grp); });
+  if(!elemGrp){
+    const cur=ELEMS.find(x=>x.k===draft.elem);
+    elemGrp=cur?cur.grp:groups[0];
+  }
+  groups.forEach(g=>{
+    const open=(g===elemGrp);
+    const head=document.createElement('button');
+    head.className='egHead'+(open?' open':'');
+    const n=ELEMS.filter(x=>x.grp===g);
+    head.innerHTML='<span class="egIco">'+n.map(x=>x.e).join('')+'</span>'
+      +'<span class="egName">'+g+'</span><span class="egArrow">'+(open?'▾':'▸')+'</span>';
+    head.onclick=()=>{ elemGrp=(elemGrp===g?null:g); buildElems(); if(elemGrp)sayNow(g); };
+    box.appendChild(head);
+    if(!open)return;
+    const wrap=document.createElement('div');wrap.className='egGrid';
+    n.forEach(el=>{const b=document.createElement('button');
+      b.className='elem'+(draft.elem===el.k?' sel':'');b.style.background=el.g;
+      b.innerHTML='<span>'+el.e+'</span>'+el.n;
+      b.onclick=()=>{draft.elem=el.k;sayNow(el.n);
+        [...box.querySelectorAll('.elem')].forEach(c=>c.classList.remove('sel'));
+        b.classList.add('sel');
+        setGrey('e-next',false);};
+      wrap.appendChild(b);});
+    box.appendChild(wrap);
+  });
   setGrey('e-next',!draft.elem);
 }
 
@@ -1809,10 +1918,23 @@ const ENEMIES=[
  {e:'🦖',n:'キングザウルス'},{e:'🤖',n:'メカロボット'},{e:'🐙',n:'オクトパンチ'},
  {e:'🦑',n:'イカロン'},{e:'👻',n:'ゴーストン'},{e:'🦂',n:'サソリガー'},{e:'🕷',n:'スパイダーン'}
 ];
-/* だれが だれに 強いか（3つの5すくみ） */
-const BEATS={water:'fire',fire:'leaf',leaf:'rock',rock:'thun',thun:'water',
-             steel:'ice',ice:'wind',wind:'sound',sound:'toxic',toxic:'steel',
-             light:'dark',dark:'magic',magic:'time',time:'space',space:'light'};
+/* だれが だれに 強いか（15グループ × 5すくみ）
+   おなじ グループの なかだけで まわるので、おぼえやすい */
+const BEATS={fire:'thun',thun:'water',water:'wind',wind:'rock',rock:'fire',
+             light:'dark',dark:'magic',magic:'time',time:'space',space:'light',
+             steel:'ice',ice:'sound',sound:'toxic',toxic:'leaf',leaf:'steel',
+             cloud:'rain',rain:'rainbow',rainbow:'sun',sun:'moon',moon:'cloud',
+             wave:'bubble',bubble:'shell',shell:'fish',fish:'ship',ship:'wave',
+             sand:'volcano',volcano:'crystal',crystal:'cave',cave:'mountain',mountain:'sand',
+             dragon:'dino',dino:'bird',bird:'bug',bug:'wolf',wolf:'dragon',
+             shark:'whale',whale:'octo',octo:'crab',crab:'jelly',jelly:'shark',
+             robot:'gear',gear:'battery',battery:'laser',laser:'radar',radar:'robot',
+             car:'train',train:'plane',plane:'digger',digger:'bike',bike:'car',
+             sword:'shield',shield:'bow',bow:'hammer',hammer:'crown',crown:'sword',
+             candy:'cake',cake:'ramen',ramen:'sushi',sushi:'juice',juice:'candy',
+             happy:'brave',brave:'calm',calm:'angry',angry:'dream',dream:'happy',
+             red:'blue',blue:'yellow',yellow:'green',green:'purple',purple:'red',
+             ghost:'slime',slime:'star',star:'mirror',mirror:'key',key:'ghost'};
 const counterOf=e=>Object.keys(BEATS).find(k=>BEATS[k]===e);
 
 let bt=null, btTimers=[], btIntervals=[];
@@ -1833,7 +1955,21 @@ function toStage(){
   sayNow(en.n+'が あらわれた！');
   bTime(()=>{bt.busy=false;announceNext();},1900);
 }
-function rollNext(){bt.next=rnd(ELEMS).k;}
+/* 敵が つぎに つかう ちから を きめる。
+   75しゅるい から でたらめに えらぶと、⭐が ほぼ 出なくなる。
+   そこで たいていの ターンは「チームの だれかが 勝てる ちから」を えらぶ。 */
+function rollNext(){
+  const team=(picks||[]).filter(c=>c&&c.elem&&BEATS[c.elem]);
+  if(team.length && Math.random()<0.7){
+    const c=team[Math.floor(Math.random()*team.length)];
+    bt.next=BEATS[c.elem];          /* この c が ⭐ に なる */
+    return;
+  }
+  /* のこりは チームと おなじ なかまうち から（まったくの 無関係を へらす） */
+  const grps=[...new Set((picks||[]).map(c=>{const e=EL(c.elem);return e&&e.grp;}).filter(Boolean))];
+  const pool=grps.length?ELEMS.filter(e=>grps.includes(e.grp)):ELEMS;
+  bt.next=rnd(pool.length?pool:ELEMS).k;
+}
 function announceNext(){
   const el=EL(bt.next);
   if(bt.combo>=3&&!bt.said){
