@@ -358,7 +358,16 @@ input[type=range]{width:100%;height:36px;accent-color:var(--gold);}
 .egName{flex:1;font-size:16px;font-weight:800;}
 .egArrow{color:var(--gold);font-size:15px;}
 .egGrid{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin:0 0 12px;}
-#elems{display:block;}
+#elems{display:block;width:min(96vw,440px);}
+/* いちばん 下の ボタンが ツールバーに かくれないように はりつける */
+.step.stick{padding-bottom:0;}
+.stickBar{
+  position:sticky;bottom:0;width:min(96vw,440px);
+  padding:10px 0 calc(14px + env(safe-area-inset-bottom,0px));
+  background:linear-gradient(180deg,rgba(11,15,26,0) 0%,var(--bg) 38%,var(--bg) 100%);
+  display:flex;justify-content:center;z-index:6;
+}
+.stickBar .go{width:100%;}
 .tools{display:flex;gap:8px;justify-content:center;padding:6px 14px 14px;}
 .tools button{background:none;border:1px solid var(--line);color:#5c6c92;font:inherit;
   font-size:12px;font-weight:700;border-radius:10px;padding:7px 12px;}
@@ -450,10 +459,10 @@ input[type=range]{width:100%;height:36px;accent-color:var(--gold);}
     </div>
   </div>
 
-  <div class="step tall" id="st2">
+  <div class="step tall stick" id="st2">
     <div class="ask">どんな ちからかな？</div>
     <div class="elems" id="elems"></div>
-    <button class="go grey" id="e-next" onclick="toName()">つぎへ ▶</button>
+    <div class="stickBar"><button class="go grey" id="e-next" onclick="toName()">つぎへ ▶</button></div>
   </div>
 
   <div class="step tall" id="st3">
