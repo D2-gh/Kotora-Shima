@@ -77,6 +77,17 @@ input[type=file]{display:none;}
 .mini-btn{border:none;border-radius:18px;padding:13px 20px;font:inherit;font-size:18px;
   background:var(--panel);color:#fff;border:2px solid var(--line);}
 .mini-btn.warn{background:#3a1520;border-color:#7a2740;color:#ff9aa8;}
+/* 「けす」は わざと 目立たなく する（まちがえて 押さないように） */
+.quietRow{display:flex;justify-content:center;padding-top:2px;}
+.quiet{background:transparent;border:2px solid #2b3654;color:#6b7a99;
+  border-radius:14px;padding:7px 18px;font:inherit;font-size:13px;opacity:.75;}
+.quiet:active{opacity:1;}
+.quiet.strong{border-color:#4a3040;color:#a8879a;font-size:15px;padding:11px 20px;}
+.typeBtn{background:#101a2e;border:3px solid var(--line);color:var(--gold);
+  border-radius:18px;padding:13px 20px;font:inherit;font-size:18px;font-weight:700;
+  width:min(94vw,420px);}
+.typeBtn:active{transform:translateY(2px);}
+.mini-btn.recOn{background:#5a1030;border-color:#a02050;color:#ffc9d6;}
 
 .meter{width:min(92vw,420px);height:54px;border-radius:27px;background:#0d1424;border:4px solid var(--line);overflow:hidden;}
 .meter i{display:block;height:100%;width:0%;background:linear-gradient(90deg,#00e5ff,#ffea00,#ff3d00);}
@@ -486,8 +497,8 @@ input[type=range]{width:100%;height:36px;accent-color:var(--gold);}
       <button class="mini-btn" onclick="rollNames()">🔄 ほかのを きく</button>
       <button class="mini-btn" onclick="readOpts('name')">🔊 もういちど</button>
     </div>
+    <button class="typeBtn" onclick="manual('name')">⌨️ じぶんで かんがえる</button>
     <button class="go grey" id="n-next" onclick="toTech()">これにする ▶</button>
-    <button class="skip" onclick="manual('name')">おうちの人が入力する</button>
   </div>
 
   <div class="step tall" id="st4">
@@ -497,8 +508,8 @@ input[type=range]{width:100%;height:36px;accent-color:var(--gold);}
       <button class="mini-btn" onclick="rollTechs()">🔄 ほかのを きく</button>
       <button class="mini-btn" onclick="readOpts('tech')">🔊 もういちど</button>
     </div>
+    <button class="typeBtn" onclick="manual('tech')">⌨️ じぶんで かんがえる</button>
     <button class="go grey" id="t-next" onclick="toStep(5)">これにする ▶</button>
-    <button class="skip" onclick="manual('tech')">おうちの人が入力する</button>
   </div>
 
   <div class="step" id="st5">
@@ -1084,7 +1095,7 @@ async function openInbox(){
         (want?'<div class="tArrow">🔄</div><div class="tSide"><img src="'+want.photo+'"><b>'+
           esc(want.name)+'</b><i>あげる</i></div>':'')+
       '</div>')+
-      '<div class="rowbtn"><button class="mini-btn warn rNo">❌ ことわる</button>'+
+      '<div class="rowbtn"><button class="quiet rNo">ことわる</button>'+
       '<button class="go rYes">⭕ OK！</button></div>';
     d.querySelector('.rYes').onclick=()=>acceptReq(r);
     d.querySelector('.rNo').onclick=()=>declineReq(r);
@@ -1782,15 +1793,45 @@ function toTech(){if(!opts.tech.length){opts.tech=makeTechs(draft.elem);}toStep(
 function manual(kind){
   stopSpeech();
   const ov=document.getElementById('ov');
-  ov.innerHTML='<div class="ask" style="font-size:19px">'+(kind==='name'?'なまえを 入力':'ひっさつわざを 入力')+
-    '<small>お子さんが言った言葉をそのまま入れてください</small></div>'+
-    '<input class="txt" id="mIn" maxlength="18">'+
+  const mic=(window.SpeechRecognition||window.webkitSpeechRecognition)
+    ? '<button class="mini-btn" id="mMic">🎤 こえで いれる</button>' : '';
+  ov.innerHTML='<div class="ask" style="font-size:20px">'+
+    (kind==='name'?'なまえを かこう':'ひっさつわざを かこう')+
+    '<small>じぶんで きめて いいよ</small></div>'+
+    '<input class="txt" id="mIn" maxlength="18" placeholder="'+
+    (kind==='name'?'れい：ドラゴンキング':'れい：ドラゴンビーム')+'">'+
+    '<div class="rowbtn">'+mic+
+    '<button class="mini-btn" id="mSay">🔊 きいてみる</button></div>'+
     '<div class="rowbtn"><button class="mini-btn" id="mNo">やめる</button>'+
-    '<button class="go" id="mOk">きめる</button></div>';
+    '<button class="go" id="mOk">これにする ▶</button></div>';
   ov.classList.add('on');
+  sayNow(kind==='name'?'なまえを かこう':'ひっさつわざを かこう');
   const inp=document.getElementById('mIn');
   inp.value=kind==='name'?draft.name:draft.tech;
   setTimeout(()=>inp.focus(),120);
+  /* かいた ことばを 声で たしかめられる */
+  document.getElementById('mSay').onclick=()=>{
+    const v=inp.value.trim();
+    sayNow(v?v:'まだ なにも かいていないよ');};
+  /* 声で 入れる（口達者な子は こちらの ほうが はやい） */
+  const mb=document.getElementById('mMic');
+  if(mb)mb.onclick=()=>{
+    const SR=window.SpeechRecognition||window.webkitSpeechRecognition;
+    if(!SR)return;
+    stopSpeech();
+    try{
+      const rec=new SR();
+      rec.lang='ja-JP';rec.interimResults=false;rec.maxAlternatives=1;
+      mb.textContent='🔴 きいてるよ…';mb.classList.add('recOn');
+      rec.onresult=e=>{
+        const t=(e.results[0][0].transcript||'').replace(/[。、\s]/g,'');
+        if(t){inp.value=t.slice(0,18);sayNow(inp.value);}
+      };
+      rec.onerror=()=>{sayNow('うまく きこえなかった。もういちど おしてね');};
+      rec.onend=()=>{mb.textContent='🎤 こえで いれる';mb.classList.remove('recOn');};
+      rec.start();
+    }catch(e){mb.textContent='🎤 こえで いれる';mb.classList.remove('recOn');}
+  };
   document.getElementById('mNo').onclick=()=>ov.classList.remove('on');
   document.getElementById('mOk').onclick=()=>{
     const v=inp.value.trim();if(!v){ov.classList.remove('on');return;}
@@ -1939,8 +1980,8 @@ function showBig(c){
   ov.innerHTML=cardHTML(c)+'<div class="rowbtn">'+
     '<button class="mini-btn" id="ov-say">🔊 よむ</button>'+
     '<button class="mini-btn" id="ov-give">🎁 おくる</button>'+
-    '<button class="mini-btn" id="ov-close">◀ もどる</button>'+
-    '<button class="mini-btn warn" id="ov-del">🗑 けす</button></div>';
+    '<button class="mini-btn" id="ov-close">◀ もどる</button></div>'+
+    '<div class="quietRow"><button class="quiet" id="ov-del">けす</button></div>';
   ov.classList.add('on');
   const line=c.name+'！ '+(c.tech?'ひっさつわざ、'+c.tech+'！ ':'')+el.n+'のちから。つよさ '+c.power+
     (c.msg?'。'+c.msg:'');
@@ -1955,7 +1996,7 @@ function confirmDel(c){
   const ov=document.getElementById('ov');
   ov.innerHTML='<div class="ask" style="font-size:19px">このカードを けしますか？<small>おうちの人へ：ボタンを2秒 長押しで削除</small></div>'+
     '<div class="rowbtn"><button class="mini-btn" id="c-no">◀ やめる</button>'+
-    '<button class="mini-btn warn" id="c-yes">長押しで けす</button></div>';
+    '<button class="quiet strong" id="c-yes">長押しで けす</button></div>';
   document.getElementById('c-no').onclick=()=>showBig(c);
   const y=document.getElementById('c-yes');let t=null;
   const st=()=>{t=setTimeout(async()=>{await dbDel(c.id);ov.classList.remove('on');openZukan();},2000);};
